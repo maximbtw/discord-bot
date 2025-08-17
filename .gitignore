@@ -1,0 +1,18 @@
+# Build results
+bin/
+obj/
+out/
+
+# Publish outputs
+publish/
+*.zip
+*.app
+
+# Rider / VSCode / Visual Studio
+.vs/
+*.user
+*.suo
+*.userprefs
+*.dbmdl
+*.opendb
+*.VC.db
