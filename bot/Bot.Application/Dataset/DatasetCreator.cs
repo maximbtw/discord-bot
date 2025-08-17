@@ -17,7 +17,7 @@ internal class DatasetCreator
 
     private readonly TimeSpan _contextWindow;
     private readonly long _authorId;
-    private Dictionary<long, string> _userIdToUserNameIndex;
+    private Dictionary<long, string> _userIdToUserNameIndex = new();
 
     public DatasetCreator(long authorId, int? contextDepthInMinutes = null)
     {

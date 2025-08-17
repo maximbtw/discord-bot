@@ -8,7 +8,6 @@ using DSharpPlus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
 IConfigurationBuilder confBuilder = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())

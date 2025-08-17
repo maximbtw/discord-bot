@@ -4,15 +4,15 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>default</LangVersion>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="EFCore.BulkExtensions" Version="9.0.1"/>
-        <PackageReference Include="FluentMigrator.Runner" Version="7.1.0"/>
-        <PackageReference Include="FluentMigrator.Runner.SQLite" Version="7.1.0"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4"/>
-        <PackageReference Include="Serilog" Version="4.3.0"/>
+        <PackageReference Include="EFCore.BulkExtensions"/>
+        <PackageReference Include="FluentMigrator.Runner"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="Serilog"/>
     </ItemGroup>
 
 </Project>

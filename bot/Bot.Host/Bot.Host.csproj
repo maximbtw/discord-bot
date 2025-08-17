@@ -6,35 +6,33 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <UseTopLevelStatements>false</UseTopLevelStatements>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02531" />
-    <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02531" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02531" />
+    <PackageReference Include="DSharpPlus" />
+    <PackageReference Include="DSharpPlus.Commands"/>
+    <PackageReference Include="DSharpPlus.Interactivity"/>
+
+    <PackageReference Include="Microsoft.Extensions.Configuration"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json"/>
     
-    <PackageReference Include="Flurl" Version="3.0.6" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.43" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.7" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
-    <PackageReference Include="RestSharp" Version="108.0.2-alpha.0.1" />
-    <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.3.0" />
-    <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog"/>
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.Console"/>
+    <PackageReference Include="Serilog.Sinks.File"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bot.Application\Bot.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Bot.Application\Bot.Application.csproj" />
   </ItemGroup>
   
 </Project>

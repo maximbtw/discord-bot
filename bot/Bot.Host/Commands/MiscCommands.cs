@@ -22,4 +22,10 @@ internal class MiscCommands : DiscordCommandsGroupBase<MiscCommands>
     {
         await ExecuteAsync(context, () => _getJokeUseCase.Execute(context, CancellationToken.None));
     }
+    
+    [Command("ping")]
+    public async ValueTask Ping(CommandContext context)
+    {
+        await context.RespondAsync("Pong!");
+    }
 }
