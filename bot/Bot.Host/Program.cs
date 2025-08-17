@@ -7,6 +7,8 @@ using Bot.Host;
 using DSharpPlus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 IConfigurationBuilder confBuilder = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -15,10 +17,14 @@ IConfigurationBuilder confBuilder = new ConfigurationBuilder()
 IConfiguration config = confBuilder.Build();
 
 var configuration = config.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!;
+ILoggerFactory loggerFactory = LoggingConfigurator.CreateLoggerFactory();
 
 var services = new ServiceCollection();
 
+services.AddSingleton(loggerFactory);
 services.AddSingleton(configuration);
+
+services.AddLogging(); 
 
 services.RegisterDb(configuration.DatabaseOptions.ConnectionString);
 services.RegisterRepositories();

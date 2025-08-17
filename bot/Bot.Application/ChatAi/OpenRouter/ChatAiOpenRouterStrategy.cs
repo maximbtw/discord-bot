@@ -1,4 +1,5 @@
-﻿using Bot.Application.Infrastructure.Configuration.AiChat;
+﻿using System.Diagnostics;
+using Bot.Application.Infrastructure.Configuration.AiChat;
 using Bot.Application.Shared;
 using Bot.Contracts;
 using Bot.Contracts.ChatAi.OpenRouter;
@@ -7,7 +8,6 @@ using Bot.Domain.Message;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Bot.Application.ChatAi.OpenRouter;
 
@@ -16,14 +16,14 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
     private readonly IMessageRepository _messageRepository;
     private readonly ICreatedMessageCache _messageCache;
     private readonly AiChatOpenRouterSettings _settings;
-    private readonly ILogger<IChatAiStrategy> _logger;
+    private readonly ChatAiOpenRouteLogger _logger;
     private readonly ChatAiOpenRouterClient _client;
 
     public ChatAiOpenRouterStrategy(
         IMessageRepository messageRepository,
         ICreatedMessageCache messageCache,
         AiChatOpenRouterSettings settings,
-        ILogger<IChatAiStrategy> logger,
+        ChatAiOpenRouteLogger logger,
         ChatAiOpenRouterClient client)
     {
         _messageRepository = messageRepository;
@@ -41,50 +41,69 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
 
     public async Task Execute(DiscordClient client, MessageCreatedEventArgs args, CancellationToken ct)
     {
-        List<Message> messages = await CreateMessages(args);
+        var sw = Stopwatch.StartNew();
+        
+        ModelRequest request = await CreateRequest(client, args, ct);
+        Exception? exception = null;
+        ModelResponse? response = null;
+        
+        try
+        {
+            response = await _client.PostAsync(request, ct);
+
+            string? text = response?.Choices.FirstOrDefault()?.Message.Content;
+
+            string answer = string.IsNullOrEmpty(text) ? _settings.BadRequestMessage : text;
+
+            await args.Message.RespondAsync(answer);
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+
+            await args.Message.RespondAsync(_settings.BadRequestMessage);
+        }
+        finally
+        {
+            sw.Stop();
+            
+            _logger.Log(sw.Elapsed, request, response, exception);
+        }
+    }
+
+    private async ValueTask<ModelRequest> CreateRequest(
+        DiscordClient client, 
+        MessageCreatedEventArgs args,
+        CancellationToken ct)
+    {
+        List<Message> messages = await CreateMessages(args, ct);
 
         if (!string.IsNullOrEmpty(_settings.SystemMessage))
         {
             messages.Insert(0, new Message
             {
-                Role= "system",
-                Content= _settings.SystemMessage
-            });   
+                Role = "system",
+                Content = _settings.SystemMessage
+            });
         }
-        
+
         messages.Add(new Message
         {
-            Content = RemoveBotTagFromMessage(DiscordContentMapper.MapContent(args.Message), client.CurrentUser.Username),
+            Content = RemoveBotTagFromMessage(DiscordContentMapper.MapContent(args.Message),
+                client.CurrentUser.Username),
             Role = "user",
             Name = args.Message.Author!.Username
         });
 
-        var request = new ModelRequest
+        return new ModelRequest
         {
             Model = _settings.Model,
             Messages = messages,
             User = args.Message.Author!.Username
         };
-
-        try
-        {
-            ModelResponse? response = await _client.PostAsync(request, ct);
-
-            string? text = response?.Choices.FirstOrDefault()?.Message.Content;
-
-            string answer = string.IsNullOrEmpty(text) ? _settings.BadRequestMessage : text;
-            
-            await args.Message.RespondAsync(answer);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error");
-            
-            await args.Message.RespondAsync(_settings.BadRequestMessage);
-        }
     }
 
-    private async ValueTask<List<Message>> CreateMessages(MessageCreatedEventArgs args)
+    private async ValueTask<List<Message>> CreateMessages(MessageCreatedEventArgs args, CancellationToken ct)
     {
         List<ShortMessageInfo> cachedMessages = _messageCache.Get(args.Channel.Id, args.Author.Id);
 
@@ -113,7 +132,7 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
             .Where(x => x.Timestamp < lastMessageDateTime)
             .OrderByDescending(x => x.Timestamp)
             .Take(needToLoad)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         messagesFromDb.Reverse();
 

@@ -36,6 +36,11 @@ internal class ChatAiHandler : IMessageCreatedHandler
         var random = new Random();
         if (args.MentionedUsers.All(u => u.Id != client.CurrentUser.Id))
         {
+            if (args.Author.IsBot)
+            {
+                return;
+            }
+            
             int roll = random.Next(0, 100);
             if (roll >= strategy.RandomMessageChance)
             {

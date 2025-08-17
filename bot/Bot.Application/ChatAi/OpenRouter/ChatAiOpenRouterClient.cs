@@ -9,7 +9,7 @@ internal class ChatAiOpenRouterClient
 {
     private static readonly Uri BaseUri = new("https://openrouter.ai/");
     private const string Endpoint = "api/v1/chat/completions";
-
+    
     private readonly HttpClient _httpClient;
 
     public ChatAiOpenRouterClient(HttpClient httpClient)
@@ -33,7 +33,7 @@ internal class ChatAiOpenRouterClient
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            throw new InvalidOperationException("Ошибка при отправке запроса к OpenRouter API.", ex);
+            throw new InvalidOperationException("Request error", ex);
         }
 
         if (!response.IsSuccessStatusCode)
@@ -41,8 +41,8 @@ internal class ChatAiOpenRouterClient
             string errorContent = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             
             throw new HttpRequestException(
-                $"Ошибка OpenRouter API: {(int)response.StatusCode} {response.ReasonPhrase}. " +
-                $"Ответ: {errorContent}");
+                $"Unsuccessful request to OpenRouter API: {(int)response.StatusCode} {response.ReasonPhrase}. " +
+                $"Response: {errorContent}");
         }
 
         string responseContent = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -53,7 +53,7 @@ internal class ChatAiOpenRouterClient
         }
         catch (JsonException ex)
         {
-            throw new InvalidOperationException("Не удалось десериализовать ответ OpenRouter API.", ex);
+            throw new InvalidOperationException("Deserialize response error", ex);
         }
     }
 }

@@ -5,7 +5,7 @@ using DSharpPlus.EventArgs;
 
 namespace Bot.Application.ChatAi;
 
-internal interface IChatAiStrategy
+public interface IChatAiStrategy
 {
     AiChatStrategy StrategyName { get; }
     
