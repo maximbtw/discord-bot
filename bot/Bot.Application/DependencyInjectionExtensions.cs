@@ -1,4 +1,6 @@
-﻿using Bot.Application.Handlers;
+﻿using Bot.Application.ChatAi;
+using Bot.Application.Handlers;
+using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Shared;
 using Bot.Application.UseCases.Ai;
 using Bot.Application.UseCases.Misc;
@@ -10,7 +12,7 @@ namespace Bot.Application;
 
 public static class DependencyInjectionExtensions
 {
-    public static void RegisterUseCases(this IServiceCollection services)
+    public static void RegisterUseCases(this IServiceCollection services, BotConfiguration configuration)
     {
         // Messages
         services.AddTransient<DeleteServerMessagesUseCase>();
@@ -26,9 +28,11 @@ public static class DependencyInjectionExtensions
         services.AddTransient<GetJokeUseCase>();
         
         // Handlers
-        services.AddTransient<IMessageCreatedHandler, AskAiHandler>();
+        services.AddTransient<IMessageCreatedHandler, ChatAiHandler>();
         services.AddTransient<IMessageCreatedHandler, SaveMessageToDbHandler>();
 
         services.AddSingleton<ICreatedMessageCache, CreatedMessageCache>();
+
+        services.RegisterAiChat(configuration.AiChatOptions);
     }
 }

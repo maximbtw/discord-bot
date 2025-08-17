@@ -22,17 +22,17 @@ services.AddSingleton(configuration);
 
 services.RegisterDb(configuration.DatabaseOptions.ConnectionString);
 services.RegisterRepositories();
-services.RegisterUseCases();
+services.RegisterUseCases(configuration);
 
 services.AddMemoryCache();
 
 Migrator.MigrateDatabase(configuration.DatabaseOptions.ConnectionString);
 
 var builder = DiscordClientBuilder.CreateDefault(
-    configuration.DiscordOptions.Token, 
+    configuration.Token, 
     DiscordIntents.AllUnprivileged  | DiscordIntents.MessageContents, services);
 
-builder.RegisterCommands(configuration.DiscordOptions);
+builder.RegisterCommands(configuration.Prefix);
 builder.RegisterEvents(services);
 
 DiscordClient client = builder.Build();

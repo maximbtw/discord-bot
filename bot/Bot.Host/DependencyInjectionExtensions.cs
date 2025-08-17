@@ -16,7 +16,7 @@ namespace Bot.Host;
 
 public static class DependencyInjectionExtensions
 {
-    public static void RegisterCommands(this DiscordClientBuilder builder, DiscordOptions options)
+    public static void RegisterCommands(this DiscordClientBuilder builder, string prefix)
     { 
         builder.UseCommands((_, extension) =>
         {
@@ -33,7 +33,7 @@ public static class DependencyInjectionExtensions
     
             TextCommandProcessor textCommandProcessor = new(new TextCommandConfiguration
             {
-                PrefixResolver = new DefaultPrefixResolver(allowMention: true, options.Prefix).ResolvePrefixAsync,
+                PrefixResolver = new DefaultPrefixResolver(allowMention: true, prefix).ResolvePrefixAsync,
             });
     
             extension.AddProcessor(textCommandProcessor);
@@ -53,10 +53,7 @@ public static class DependencyInjectionExtensions
                 IEnumerable<IMessageCreatedHandler> handlers = serviceProvider.GetServices<IMessageCreatedHandler>();
                 IEnumerable<Task> tasks = handlers.Select(async handler =>
                 {
-                    if (await handler.NeedExecute(client, args))
-                    {
-                        await handler.Execute(client, args);
-                    }
+                    await handler.Execute(client, args);
                 });
 
                 _ = Task.WhenAll(tasks);

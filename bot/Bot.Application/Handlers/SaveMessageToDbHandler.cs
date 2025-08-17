@@ -21,13 +21,13 @@ internal class SaveMessageToDbHandler : IMessageCreatedHandler
         _createdMessageCache = createdMessageCache;
     }
 
-    public ValueTask<bool> NeedExecute(DiscordClient client, MessageCreatedEventArgs args)
-    {
-        return new ValueTask<bool>(DiscordMessageHelper.MessageIsValid(args.Message, client.CurrentUser.Id));
-    }
-
     public async Task Execute(DiscordClient client, MessageCreatedEventArgs args)
     {
+        if (!DiscordMessageHelper.MessageIsValid(args.Message, client.CurrentUser.Id))
+        {
+            return;
+        }
+        
         var info = new ShortMessageInfo(
             args.Message.Id,
             DiscordContentMapper.MapContent(args.Message),

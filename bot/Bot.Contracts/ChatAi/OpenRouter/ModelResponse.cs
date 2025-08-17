@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Bot.Contracts.Ai.OpenRouter;
+namespace Bot.Contracts.ChatAi.OpenRouter;
 
 public class ModelResponse
 {
