@@ -8,8 +8,6 @@
     <PackageVersion Include="DSharpPlus" Version="5.0.0-nightly-02531" />
     <PackageVersion Include="DSharpPlus.Commands" Version="5.0.0-nightly-02531" />
     <PackageVersion Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02531" />
-    <PackageVersion Include="Microsoft.AspNetCore" Version="2.3.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.7" />
