@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 using Bot.Application;
 using Bot.Application.Infrastructure.Configuration;
@@ -9,6 +8,7 @@ using DSharpPlus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Builder;
 
 IConfigurationRoot config = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -44,4 +44,11 @@ builder.RegisterEvents(services);
 DiscordClient client = builder.Build();
 
 await client.ConnectAsync();
+
+// TODO: Нужен web сервис чтобы был healthcheck у джобы, иначе хостинг останавливает сервис
+WebApplicationBuilder builderWeb = WebApplication.CreateBuilder();
+WebApplication app = builderWeb.Build();
+app.MapGet("/healthz", () => "OK");
+_ = app.RunAsync(); 
+
 await Task.Delay(-1);
