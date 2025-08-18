@@ -4,6 +4,7 @@ using Bot.Contracts.Shared;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
 namespace Bot.Application.Handlers;
@@ -27,16 +28,19 @@ internal class SaveMessageToDbHandler : IMessageCreatedHandler
         {
             return;
         }
+
+        bool isApplicationCommand = args.Message.Author!.Id == client.CurrentUser.Id && 
+                                    args.Message.MessageType == DiscordMessageType.ApplicationCommand;
+
+        if (isApplicationCommand)
+        {
+            return;
+        }
         
-        var info = new ShortMessageInfo(
-            args.Message.Id,
-            DiscordContentMapper.MapContent(args.Message),
-            args.Message.Author!.Id, 
-            args.Message.Author.Username,
-            args.Message.Author.IsBot,
-            args.Message.Timestamp.UtcDateTime);
+        // Не сохранять ответы бота на команды.
+        MessageDto message = DiscordContentMapper.MapDiscordMessageToDto(args.Message);
         
-        _createdMessageCache.Add(args.Guild.Id, args.Channel.Id, info);
+        _createdMessageCache.Add(args.Guild.Id, args.Channel.Id, message);
         
         await using DbScope scope = _scopeProvider.GetDbScope();
 

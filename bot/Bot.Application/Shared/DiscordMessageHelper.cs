@@ -9,6 +9,11 @@ public static class DiscordMessageHelper
         return !string.IsNullOrWhiteSpace(message.Content) &&
                message.Author != null &&
                (!message.Author.IsBot || message.Author.Id == currentBotId) &&
-               !message.Content.StartsWith($"/");
+               !MessageContentIsSlashCommand(message.Content);
+    }
+    
+    public static bool MessageContentIsSlashCommand(string content)
+    {
+        return content.StartsWith("/");
     }
 }

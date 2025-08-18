@@ -1,6 +1,7 @@
 ﻿using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
+using DSharpPlus.Entities;
 
 namespace Bot.Application.UseCases.ServerMessages;
 
@@ -27,6 +28,9 @@ public class DeleteServerMessagesUseCase
 
         await scope.CommitAsync(ct);
         
-        await context.FollowupAsync($"✅ Все сообщения сервера **{context.Guild!.Name}** удалены.");
+        await context.EditResponseAsync(
+            new DiscordWebhookBuilder()
+                .WithContent($"✅ Все сообщения сервера **{context.Guild!.Name}** удалены.")
+        );
     }
 }

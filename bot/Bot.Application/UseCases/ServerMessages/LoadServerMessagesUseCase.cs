@@ -42,22 +42,17 @@ public class LoadServerMessagesUseCase
             return;
         }
 
-        int channelsCount = guild.Channels.Count(x => x.Value.Type == DiscordChannelType.Text);
-
-        await context.RespondAsync($"Загрузка сообщений для сервера **{server.Name}**. Всего каналов: {channelsCount}");
-
-        await LoadMessagesAndSaveToDb(context, guild, maxDegreeOfParallel, channelsCount, ct);
-
-        await context.FollowupAsync($"✅ Загрузка сообщений сервера **{guild.Name}** завершена.");
+        await LoadMessagesAndSaveToDb(context, guild, maxDegreeOfParallel, ct);
     }
 
     private async Task LoadMessagesAndSaveToDb(
         CommandContext context,
         DiscordGuild guild,
         int maxDegreeOfParallel,
-        int channelsCount,
         CancellationToken ct)
     {
+        int channelsCount = guild.Channels.Count(x => x.Value.Type == DiscordChannelType.Text);
+        
         var dispatcher = await ProgressMessageDispatcher.Create(context, channelsCount);
 
         var dbSaverChannel = Channel.CreateUnbounded<DiscordMessage>(new UnboundedChannelOptions
@@ -91,6 +86,8 @@ public class LoadServerMessagesUseCase
         dbSaverChannel.Writer.Complete();
 
         await saveToDbTask;
+
+        await dispatcher.Complete();
     }
 
     private async Task LoadChannelMessagesAndSaveToDb(
@@ -115,7 +112,7 @@ public class LoadServerMessagesUseCase
                 {
                     continue;
                 }
-                
+
                 await dbSaverChannelWriter.WriteAsync(message, ct);
                 anyLoaded = true;
                 lastMessageId = message.Id;
@@ -133,8 +130,6 @@ public class LoadServerMessagesUseCase
 
         await foreach (DiscordMessage discordMessage in dbSaverChannelReader.ReadAllAsync(ct))
         {
-            dispatcher.IncrementTotalMessages();
-
             buffer.Add(DiscordContentMapper.MapDiscordMessage(discordMessage));
 
             if (buffer.Count >= maxMessageToBulkInsert)
@@ -151,7 +146,7 @@ public class LoadServerMessagesUseCase
         async Task SaveToDb()
         {
             await _messageRepository.BulkInsert(buffer, ct);
-            await dispatcher.MessagesComplete(buffer.Count);
+            await dispatcher.AddSavedMessages(buffer.Count);
 
             buffer.Clear();
         }
@@ -159,62 +154,76 @@ public class LoadServerMessagesUseCase
 
     private class ProgressMessageDispatcher
     {
-        private readonly DiscordMessage _channelProgressMessage;
-        private readonly DiscordMessage _messagesProgressMessage;
+        private readonly CommandContext _context;
 
         private readonly int _totalChannels;
         private int _processedChannels;
-        private int _totalMessages;
         private int _processedMessages;
+
+        private ProgressMessageDispatcher(CommandContext context, int totalChannels)
+        {
+            _context = context;
+            _totalChannels = totalChannels;
+        }
 
         public static async Task<ProgressMessageDispatcher> Create(CommandContext context, int totalChannels)
         {
-            DiscordMessage channelProgressMessage = await context.Channel
-                .SendMessageAsync(GetLoadProgressString(processedChannels: 0, totalChannels));
+            var dispatcher = new ProgressMessageDispatcher(context, totalChannels);
 
-            DiscordMessage messagesProgressMessage = await context.Channel
-                .SendMessageAsync(GetSaveProgressString(0, 0));
+            await context.RespondAsync(new DiscordWebhookBuilder()
+                .WithContent(dispatcher.GetProgressString(done: false)));
 
-            return new ProgressMessageDispatcher(totalChannels, channelProgressMessage, messagesProgressMessage);
-        }
-
-        private ProgressMessageDispatcher(
-            int totalChannels,
-            DiscordMessage channelProgressMessage,
-            DiscordMessage messagesProgressMessage)
-        {
-            _totalChannels = totalChannels;
-            _channelProgressMessage = channelProgressMessage;
-            _messagesProgressMessage = messagesProgressMessage;
+            return dispatcher;
         }
 
         public async Task ChannelComplete()
         {
             Interlocked.Increment(ref _processedChannels);
 
-            await _channelProgressMessage.ModifyAsync(GetLoadProgressString(_processedChannels, _totalChannels));
+            await _context.EditResponseAsync(new DiscordWebhookBuilder()
+                .WithContent(GetProgressString(done: false)));
         }
 
-        public void IncrementTotalMessages()
-        {
-            Interlocked.Increment(ref _totalMessages);
-        }
-
-        public async Task MessagesComplete(int messagesCount)
+        public async Task AddSavedMessages(int messagesCount)
         {
             Interlocked.Add(ref _processedMessages, messagesCount);
 
-            await _messagesProgressMessage.ModifyAsync(GetSaveProgressString(_processedMessages, _totalMessages));
+            await _context.EditResponseAsync(new DiscordWebhookBuilder()
+                .WithContent(GetProgressString(done: false)));
         }
 
-        private static string GetLoadProgressString(int processedChannels, int totalChannels) =>
-            $"Загружено каналов: {processedChannels}/{totalChannels} ({processedChannels * 100 / totalChannels}%)";
-
-        private static string GetSaveProgressString(int processedMessages, int totalMessages)
+        public async Task Complete()
         {
-            int percent = totalMessages == 0 ? 0 : processedMessages * 100 / totalMessages;
-            
-            return $"Сохранено сообщений: {processedMessages}/{totalMessages} ({percent}%)";
+            await _context.EditResponseAsync(new DiscordWebhookBuilder()
+                .WithContent(GetProgressString(done: true)));
+        }
+
+        private string GetProgressString(bool done)
+        {
+            int percent = _totalChannels == 0
+                ? 100
+                : (int)((double)_processedChannels / _totalChannels * 100);
+
+            string bar = BuildProgressBar(percent);
+
+            if (!done)
+            {
+                return $"📡 Загрузка данных...\n" +
+                       $"{bar} {percent}%\n" +
+                       $"Каналов: {_processedChannels}/{_totalChannels}\n" +
+                       $"Сообщений: {_processedMessages:N0}";
+            }
+
+            return $"✅ Загрузка завершена!\n" +
+                   $"Каналов обработано: **{_processedChannels}/{_totalChannels}**\n" +
+                   $"Сообщений сохранено: **{_processedMessages:N0}**";
+        }
+
+        private static string BuildProgressBar(int percent, int size = 20)
+        {
+            int filled = percent * size / 100;
+            int empty = size - filled;
+            return $"[{new string('█', filled)}{new string('░', empty)}]";
         }
     }
 }

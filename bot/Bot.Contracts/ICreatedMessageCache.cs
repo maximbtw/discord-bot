@@ -4,7 +4,7 @@ namespace Bot.Contracts;
 
 public interface ICreatedMessageCache
 {
-    void Add(ulong serverId, ulong channelId, ShortMessageInfo messageInfo);
+    void Add(ulong serverId, ulong channelId, MessageDto message);
     
-    List<ShortMessageInfo> Get(ulong serverId, ulong channelId);
+    List<MessageDto> GetLastMessages(ulong serverId, ulong channelId);
 }

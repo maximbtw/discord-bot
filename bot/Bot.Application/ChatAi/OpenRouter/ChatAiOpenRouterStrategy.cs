@@ -105,10 +105,11 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
 
     private async ValueTask<List<Message>> CreateMessages(MessageCreatedEventArgs args, CancellationToken ct)
     {
-        List<ShortMessageInfo> cachedMessages = _messageCache.Get(args.Channel.Id, args.Author.Id);
-
-        cachedMessages = cachedMessages.Where(x => x.Id != args.Message.Id).TakeLast(_settings.MaxChatHistoryMessages)
+        List<MessageDto> cachedMessages = _messageCache.GetLastMessages(args.Guild.Id, args.Channel.Id)           
+            .Where(x => x.Id != (long)args.Message.Id)
+            .TakeLast(_settings.MaxChatHistoryMessages)
             .ToList();
+        
         cachedMessages.Reverse();
 
         if (cachedMessages.Count == _settings.MaxChatHistoryMessages)
@@ -121,7 +122,7 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
             });
         }
 
-        DateTime lastMessageDateTime = cachedMessages.LastOrDefault()?.CreatedAt ?? DateTime.MaxValue;
+        DateTime lastMessageDateTime = cachedMessages.LastOrDefault()?.Timestamp ?? DateTime.MaxValue;
 
         int needToLoad = _settings.MaxChatHistoryMessages - cachedMessages.Count;
 

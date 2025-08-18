@@ -18,6 +18,8 @@ public class GetServerMessagesStatsUseCase
     
     public async ValueTask Execute(CommandContext context, DiscordUser? user = null, CancellationToken ct = default)
     {
+        await context.RespondAsync("Ищу статистику...");
+        
         List<UserStats> stats = await GetStats((long)context.Guild!.Id, (long?)user?.Id, ct);
         
         var sb = new StringBuilder();
@@ -41,8 +43,8 @@ public class GetServerMessagesStatsUseCase
         {
             sb.AppendLine("❌ Статистика не найдена.");
         }
-
-        await context.RespondAsync(sb.ToString());
+        
+        await context.EditResponseAsync(new DiscordWebhookBuilder().WithContent(sb.ToString()));
     }
 
     private async Task<List<UserStats>> GetStats(long serverId, long? userId, CancellationToken ct)

@@ -15,13 +15,13 @@ internal class CreatedMessageCache : ICreatedMessageCache
         _cache = cache;
     }
 
-    public void Add(ulong serverId, ulong channelId, ShortMessageInfo messageInfo)
+    public void Add(ulong serverId, ulong channelId, MessageDto message)
     {
         var key = new Key(serverId, channelId);
         
-        Queue<ShortMessageInfo> messages = _cache.GetOrCreate(key, _ => new Queue<ShortMessageInfo>())!;
+        Queue<MessageDto> messages = _cache.GetOrCreate(key, _ => new Queue<MessageDto>())!;
         
-        messages.Enqueue(messageInfo);
+        messages.Enqueue(message);
         
         if (messages.Count > MaxMessages)
         {
@@ -29,13 +29,13 @@ internal class CreatedMessageCache : ICreatedMessageCache
         }
     }
     
-    public List<ShortMessageInfo> Get(ulong serverId, ulong channelId)
+    public List<MessageDto> GetLastMessages(ulong serverId, ulong channelId)
     {
         var key = new Key(serverId, channelId);
         
-        return _cache.TryGetValue(key, out Queue<ShortMessageInfo>? messages)
+        return _cache.TryGetValue(key, out Queue<MessageDto>? messages)
             ? messages!.ToList()
-            : Enumerable.Empty<ShortMessageInfo>().ToList();
+            : Enumerable.Empty<MessageDto>().ToList();
     }
 
     private readonly record struct Key(ulong ServerId, ulong ChannelId);

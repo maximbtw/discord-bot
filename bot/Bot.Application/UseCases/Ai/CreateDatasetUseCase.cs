@@ -6,6 +6,7 @@ using Bot.Application.Dataset;
 using Bot.Application.Dataset.Entries;
 using Bot.Domain.Message;
 using DSharpPlus.Commands;
+using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bot.Application.UseCases.Ai;
@@ -46,6 +47,9 @@ public class CreateDatasetUseCase
 
         await File.WriteAllTextAsync(filePath, json, Encoding.UTF8, ct);
 
-        await context.FollowupAsync($"Датасет сохранён.");
+        await context.EditResponseAsync(
+            new DiscordWebhookBuilder()
+                .WithContent($"Датасет сохранён.")
+        );
     }
 }
