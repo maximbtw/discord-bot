@@ -25,8 +25,6 @@ internal abstract class DiscordCommandsGroupBase<TGroup> : DiscordCommandsGroupB
         catch (Exception ex)
         {
             this.Logger.LogError(ex, "Unexpected error while executing command.");
-
-            await context.FollowupAsync("Something went wrong. Please try again later.");
         }
     }
 }
