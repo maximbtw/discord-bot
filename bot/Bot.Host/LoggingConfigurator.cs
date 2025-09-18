@@ -71,7 +71,7 @@ internal static class LoggingConfigurator
                 lc = lc.WriteToFile(fileName, rollingInterval);
             }
 
-            lc.WriteTo.Console();
+            lc.WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Warning);
         });
     }
 

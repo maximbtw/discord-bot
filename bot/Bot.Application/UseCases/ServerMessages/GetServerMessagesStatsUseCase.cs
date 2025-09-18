@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Bot.Application.Infrastructure.Configuration;
 using Bot.Domain.Message;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
@@ -9,15 +10,24 @@ namespace Bot.Application.UseCases.ServerMessages;
 public class GetServerMessagesStatsUseCase
 {
     private readonly IMessageRepository _messageRepository;
+    private readonly BotConfiguration _configuration;
 
     public GetServerMessagesStatsUseCase(
-        IMessageRepository messageRepository)
+        IMessageRepository messageRepository,
+        BotConfiguration configuration)
     {
         _messageRepository = messageRepository;
+        _configuration = configuration;
     }
     
     public async ValueTask Execute(CommandContext context, DiscordUser? user = null, CancellationToken ct = default)
     {
+        if (!_configuration.SaveMessagesToDb)
+        {
+            await context.RespondAsync("Операция не поддерживается.");
+            return;
+        }
+        
         await context.RespondAsync("Ищу статистику...");
         
         List<UserStats> stats = await GetStats((long)context.Guild!.Id, (long?)user?.Id, ct);
