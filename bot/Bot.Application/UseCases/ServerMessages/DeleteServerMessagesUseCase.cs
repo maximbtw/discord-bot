@@ -24,7 +24,7 @@ public class DeleteServerMessagesUseCase
 
     public async ValueTask Execute(CommandContext context, long serverId, CancellationToken ct)
     {
-        if (!_configuration.SaveMessagesToDb)
+        if (!_configuration.UseDb)
         {
             await context.RespondAsync("Операция не поддерживается.");
             return;
@@ -34,7 +34,7 @@ public class DeleteServerMessagesUseCase
         
         await using DbScope scope = _scopeProvider.GetDbScope();
         
-        await _messageRepository.DeleteServerMessages(serverId, ct);
+        await _messageRepository.DeleteServerMessages(serverId, scope, ct);
 
         await scope.CommitAsync(ct);
         

@@ -6,36 +6,37 @@ namespace Bot.Domain.Message;
 
 internal class MessageRepository : IMessageRepository
 {
-    private readonly DiscordDbContext _dbContext;
-    
-    public MessageRepository(DiscordDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-    
-    public async Task BulkInsert(IEnumerable<MessageOrm> messages, CancellationToken ct)
+    public async Task BulkInsert(IEnumerable<MessageOrm> messages, DbScope scope, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(messages);
 
-        await _dbContext.BulkInsertAsync(messages, cancellationToken: ct);
+        DiscordDbContext context = scope.GetDbContext();
+        
+        await context.BulkInsertAsync(messages, cancellationToken: ct);
     }
 
-    public async Task Insert(MessageOrm message, CancellationToken ct = default)
+    public async Task Insert(MessageOrm message, DbScope scope, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(message);
+        
+        DiscordDbContext context = scope.GetDbContext();
 
-        await _dbContext.AddAsync(message, cancellationToken: ct);
+        await context.AddAsync(message, cancellationToken: ct);
     }
 
-    public async Task DeleteServerMessages(long serverId, CancellationToken ct)
+    public async Task DeleteServerMessages(long serverId, DbScope scope, CancellationToken ct)
     {
-        await _dbContext.Set<MessageOrm>()
+        DiscordDbContext context = scope.GetDbContext();
+        
+        await context.Set<MessageOrm>()
             .Where(m => m.ServerId == serverId)
             .ExecuteDeleteAsync(ct);
     }
 
-    public IQueryable<MessageOrm> GetQueryable()
+    public IQueryable<MessageOrm> GetQueryable(DbScope scope)
     {
-        return _dbContext.Set<MessageOrm>().AsNoTracking();
+        DiscordDbContext context = scope.GetDbContext();
+        
+        return context.Set<MessageOrm>().AsNoTracking();
     }
 }

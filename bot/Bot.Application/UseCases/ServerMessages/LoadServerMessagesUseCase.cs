@@ -2,6 +2,7 @@
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Shared;
 using Bot.Domain.Message;
+using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
@@ -14,20 +15,23 @@ public class LoadServerMessagesUseCase
     private readonly DiscordClient _client;
     private readonly IMessageRepository _messageRepository;
     private readonly BotConfiguration _configuration;
+    private readonly IDbScopeProvider _scopeProvider;
 
     public LoadServerMessagesUseCase(
         IMessageRepository messageRepository,
         DiscordClient client,
-        BotConfiguration configuration)
+        BotConfiguration configuration,
+        IDbScopeProvider scopeProvider)
     {
         _messageRepository = messageRepository;
         _client = client;
         _configuration = configuration;
+        _scopeProvider = scopeProvider;
     }
 
     public async ValueTask Execute(CommandContext context, int maxDegreeOfParallel, CancellationToken ct)
     {
-        if (!_configuration.SaveMessagesToDb)
+        if (!_configuration.UseDb)
         {
             await context.RespondAsync("Операция не поддерживается.");
             return;
@@ -41,8 +45,10 @@ public class LoadServerMessagesUseCase
             return;
         }
 
+        await using DbScope scope = _scopeProvider.GetDbScope();
+
         bool messagesExist = await _messageRepository
-            .GetQueryable()
+            .GetQueryable(scope)
             .AnyAsync(x => x.ServerId == (long)server.Id, ct);
 
         if (messagesExist)
@@ -155,7 +161,8 @@ public class LoadServerMessagesUseCase
 
         async Task SaveToDb()
         {
-            await _messageRepository.BulkInsert(buffer, ct);
+            await using DbScope scope = _scopeProvider.GetDbScope();
+            await _messageRepository.BulkInsert(buffer, scope, ct);
             await dispatcher.AddSavedMessages(buffer.Count);
 
             buffer.Clear();

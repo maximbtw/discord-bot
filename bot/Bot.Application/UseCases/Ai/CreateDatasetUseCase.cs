@@ -5,6 +5,7 @@ using System.Text.Unicode;
 using Bot.Application.Dataset;
 using Bot.Application.Dataset.Entries;
 using Bot.Domain.Message;
+using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,12 @@ namespace Bot.Application.UseCases.Ai;
 public class CreateDatasetUseCase
 {
     private readonly IMessageRepository _messageRepository;
+    private readonly IDbScopeProvider _scopeProvider;
 
-    public CreateDatasetUseCase(IMessageRepository messageRepository)
+    public CreateDatasetUseCase(IMessageRepository messageRepository, IDbScopeProvider scopeProvider)
     {
         _messageRepository = messageRepository;
+        _scopeProvider = scopeProvider;
     }
 
     public async ValueTask Execute(
@@ -29,9 +32,13 @@ public class CreateDatasetUseCase
         DatasetCreator creator = new((long)context.User.Id, 5);
 
         long serverId = (long)context.Guild!.Id;
+        
+        await using DbScope scope = _scopeProvider.GetDbScope();
 
-        List<MessageOrm> messages =
-            await _messageRepository.GetQueryable().Where(x => x.ServerId == serverId).ToListAsync(ct);
+        List<MessageOrm> messages = await _messageRepository
+            .GetQueryable(scope)
+            .Where(x => x.ServerId == serverId)
+            .ToListAsync(ct);
 
         IEnumerable<ConversationEntry> dataset = creator.Create(messages);
         

@@ -49,14 +49,14 @@ internal class SaveMessageToDbHandler : IMessageCreatedHandler
 
         _createdMessageCache.Add(args.Guild.Id, args.Channel.Id, message);
         
-        if (!_configuration.SaveMessagesToDb)
+        if (!_configuration.UseDb)
         {
             return;
         }
 
         await using DbScope scope = _scopeProvider.GetDbScope();
 
-        await _messageRepository.Insert(DiscordContentMapper.MapDiscordMessage(args.Message));
+        await _messageRepository.Insert(DiscordContentMapper.MapDiscordMessage(args.Message), scope);
 
         await scope.CommitAsync();
     }

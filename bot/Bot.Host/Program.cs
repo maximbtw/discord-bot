@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 using Bot.Application;
 using Bot.Application.Infrastructure.Configuration;
@@ -26,13 +25,11 @@ services.AddSingleton(configuration);
 
 services.AddLogging(); 
 
-services.RegisterDb(configuration.DatabaseOptions.ConnectionString);
+services.RegisterDb(configuration.UseDb, configuration.DatabaseOptions?.ConnectionString);
 services.RegisterRepositories();
 services.RegisterUseCases(configuration);
 
 services.AddMemoryCache();
-
-Migrator.MigrateDatabase(configuration.DatabaseOptions.ConnectionString);
 
 var builder = DiscordClientBuilder.CreateDefault(
     configuration.Token, 

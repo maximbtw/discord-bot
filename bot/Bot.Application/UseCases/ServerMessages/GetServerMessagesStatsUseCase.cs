@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Domain.Message;
+using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -10,19 +11,21 @@ namespace Bot.Application.UseCases.ServerMessages;
 public class GetServerMessagesStatsUseCase
 {
     private readonly IMessageRepository _messageRepository;
+    private readonly IDbScopeProvider _scopeProvider;
     private readonly BotConfiguration _configuration;
 
     public GetServerMessagesStatsUseCase(
         IMessageRepository messageRepository,
-        BotConfiguration configuration)
+        BotConfiguration configuration, IDbScopeProvider scopeProvider)
     {
         _messageRepository = messageRepository;
         _configuration = configuration;
+        _scopeProvider = scopeProvider;
     }
     
     public async ValueTask Execute(CommandContext context, DiscordUser? user = null, CancellationToken ct = default)
     {
-        if (!_configuration.SaveMessagesToDb)
+        if (!_configuration.UseDb)
         {
             await context.RespondAsync("Операция не поддерживается.");
             return;
@@ -59,8 +62,10 @@ public class GetServerMessagesStatsUseCase
 
     private async Task<List<UserStats>> GetStats(long serverId, long? userId, CancellationToken ct)
     {
+        await using DbScope scope = _scopeProvider.GetDbScope();
+        
         IQueryable<MessageOrm> query = _messageRepository
-            .GetQueryable()
+            .GetQueryable(scope)
             .Where(x => x.ServerId == serverId && !x.UserIsBot);
 
         if (userId != null)

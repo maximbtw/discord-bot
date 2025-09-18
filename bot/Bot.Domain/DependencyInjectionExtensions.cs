@@ -29,10 +29,19 @@ public static class DependencyInjectionExtensions
         }
     }
     
-    public static void RegisterDb(this IServiceCollection services, string connectionString)
+    public static void RegisterDb(this IServiceCollection services, bool saveMessagesToDb, string? connectionString)
     {
-        services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(connectionString));
+        if (saveMessagesToDb)
+        {
+            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(connectionString));
 
-        services.AddScoped<IDbScopeProvider, DbScopeProvider>();
+            services.AddScoped<IDbScopeProvider, DbScopeProvider>();
+        
+            Migrator.MigrateDatabase(connectionString!);    
+        }
+        else
+        {
+            services.AddScoped<IDbScopeProvider, NoDbScopeProvider>();
+        }
     }
 }

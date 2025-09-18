@@ -11,9 +11,8 @@ public class BotConfiguration
     [Required]
     public string Prefix { get;  set; } = string.Empty;
     
-    public bool SaveMessagesToDb { get; set; }
+    public bool UseDb { get; set; }
     
-    [Required]
     public DatabaseOptions DatabaseOptions { get; set; } = null!;
     
     [Required]

@@ -15,6 +15,8 @@ public class DbScope : IAsyncDisposable
         _dbContext = dbContext;
         _transaction = _dbContext.Database.BeginTransaction(isolationLevel);
     }
+    
+    internal DiscordDbContext GetDbContext() => _dbContext;
 
     public async Task CommitAsync(CancellationToken ct = default)
     {

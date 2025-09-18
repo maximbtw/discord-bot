@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
+using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Infrastructure.Configuration.AiChat;
 using Bot.Application.Shared;
 using Bot.Contracts;
 using Bot.Contracts.ChatAi.OpenRouter;
 using Bot.Contracts.Shared;
 using Bot.Domain.Message;
+using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using Microsoft.EntityFrameworkCore;
@@ -15,22 +17,27 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
 {
     private readonly IMessageRepository _messageRepository;
     private readonly ICreatedMessageCache _messageCache;
+    private readonly IDbScopeProvider _scopeProvider;
     private readonly AiChatOpenRouterSettings _settings;
     private readonly ChatAiOpenRouteLogger _logger;
     private readonly ChatAiOpenRouterClient _client;
+    private readonly BotConfiguration _configuration;
 
     public ChatAiOpenRouterStrategy(
         IMessageRepository messageRepository,
         ICreatedMessageCache messageCache,
+        IDbScopeProvider scopeProvider,
         AiChatOpenRouterSettings settings,
         ChatAiOpenRouteLogger logger,
-        ChatAiOpenRouterClient client)
+        ChatAiOpenRouterClient client, BotConfiguration configuration)
     {
         _messageRepository = messageRepository;
         _messageCache = messageCache;
+        _scopeProvider = scopeProvider;
         _settings = settings;
         _logger = logger;
         _client = client;
+        _configuration = configuration;
     }
 
     public AiChatStrategy StrategyName => AiChatStrategy.OpenRouter;
@@ -121,13 +128,28 @@ internal class ChatAiOpenRouterStrategy : IChatAiStrategy
                 Role = x.UserIsBot ? "assistant" : "user"
             });
         }
+        
+        if (_configuration.UseDb)
+        {
+            return await LoadMessagesFromDb(args, cachedMessages, ct);
+        }
+        
+        return Enumerable.Empty<Message>().ToList();
+    }
 
+    private async Task<List<Message>> LoadMessagesFromDb(
+        MessageCreatedEventArgs args, 
+        List<MessageDto> cachedMessages,
+        CancellationToken ct)
+    {
         DateTime lastMessageDateTime = cachedMessages.LastOrDefault()?.Timestamp ?? DateTime.MaxValue;
 
         int needToLoad = _settings.MaxChatHistoryMessages - cachedMessages.Count;
+        
+        await using DbScope scope = _scopeProvider.GetDbScope();
 
         List<MessageOrm> messagesFromDb = await _messageRepository
-            .GetQueryable()
+            .GetQueryable(scope)
             .Where(x => x.Id != (long)args.Message.Id)
             .Where(x => x.ServerId == (long)args.Channel.GuildId! && x.ChannelId == (long)args.Channel.Id)
             .Where(x => x.Timestamp < lastMessageDateTime)
