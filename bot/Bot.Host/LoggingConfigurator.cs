@@ -23,7 +23,7 @@ internal static class LoggingConfigurator
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             
-            .WriteFiltered("general",  excludeFilters: SpecialLoggers)
+            .WriteFiltered("general",  excludeFilters: SpecialLoggers, minLevelToWriteInConsole: LogEventLevel.Information)
             
             .WriteFiltered("open-router-requests", includeFilters: [nameof(ChatAiOpenRouteLogger)])
             .WriteFiltered(
@@ -47,7 +47,8 @@ internal static class LoggingConfigurator
         string[]? includeFilters = null,
         string[]? excludeFilters = null,
         RollingInterval rollingInterval = RollingInterval.Day,
-        ITextFormatter? formatter = null)
+        ITextFormatter? formatter = null,
+        LogEventLevel minLevelToWriteInConsole = LogEventLevel.Warning)
     {
         return logger.WriteTo.Logger(lc =>
         {
@@ -71,7 +72,7 @@ internal static class LoggingConfigurator
                 lc = lc.WriteToFile(fileName, rollingInterval);
             }
 
-            lc.WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Warning);
+            lc.WriteTo.Console(minLevelToWriteInConsole);
         });
     }
 
