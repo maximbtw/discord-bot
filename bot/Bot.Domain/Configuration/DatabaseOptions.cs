@@ -4,7 +4,7 @@ namespace Bot.Domain.Configuration;
 
 public class DatabaseOptions
 {
-    public bool UseDb { get; set; } = true;
+    public bool UseInMemoryDatabase { get; set; } 
     
     [Required]
     public string ConnectionString { get; set; } = string.Empty;

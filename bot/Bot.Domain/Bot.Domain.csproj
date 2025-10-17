@@ -9,10 +9,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="EFCore.BulkExtensions"/>
-        <PackageReference Include="FluentMigrator.Runner"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
-        <PackageReference Include="Serilog"/>
+        <PackageReference Include="EFCore.BulkExtensions" />
+        <PackageReference Include="FluentMigrator.Runner" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Serilog" />
     </ItemGroup>
 
 </Project>

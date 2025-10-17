@@ -32,7 +32,7 @@ public static class DependencyInjectionExtensions
     
     public static void RegisterDb(this IServiceCollection services, DatabaseOptions databaseOptions)
     {
-        if (databaseOptions.UseDb)
+        if (!databaseOptions.UseInMemoryDatabase)
         {
             services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(databaseOptions.ConnectionString));
 
@@ -42,7 +42,10 @@ public static class DependencyInjectionExtensions
         }
         else
         {
-            services.AddScoped<IDbScopeProvider, NoDbScopeProvider>();
+            services.AddDbContext<DiscordDbContext>(options =>
+                options.UseInMemoryDatabase("DiscordBotMemory"));
+
+            services.AddScoped<IDbScopeProvider, InMemoryDbScopeProvider>();
         }
     }
 }
