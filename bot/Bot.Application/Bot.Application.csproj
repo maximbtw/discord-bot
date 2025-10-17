@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <PackageReference Include="DSharpPlus.Commands"/>
+      <PackageReference Include="OpenAI" />
       <PackageReference Include="Serilog"/>
     </ItemGroup>
 

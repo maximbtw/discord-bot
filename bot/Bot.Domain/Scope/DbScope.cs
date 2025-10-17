@@ -10,7 +10,7 @@ public class DbScope : IAsyncDisposable
     private readonly IDbContextTransaction _transaction;
     private bool _committed;
 
-    internal DbScope(DiscordDbContext dbContext, IsolationLevel isolationLevel)
+    internal DbScope(DiscordDbContext dbContext, IsolationLevel isolationLevel = IsolationLevel.Snapshot)
     {
         _dbContext = dbContext;
         _transaction = _dbContext.Database.BeginTransaction(isolationLevel);

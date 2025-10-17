@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Bot.Domain.Configuration;
 using Bot.Domain.Scope;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,15 +30,15 @@ public static class DependencyInjectionExtensions
         }
     }
     
-    public static void RegisterDb(this IServiceCollection services, bool saveMessagesToDb, string? connectionString)
+    public static void RegisterDb(this IServiceCollection services, DatabaseOptions databaseOptions)
     {
-        if (saveMessagesToDb)
+        if (databaseOptions.UseDb)
         {
-            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(connectionString));
+            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(databaseOptions.ConnectionString));
 
             services.AddScoped<IDbScopeProvider, DbScopeProvider>();
         
-            Migrator.MigrateDatabase(connectionString!);    
+            Migrator.MigrateDatabase(databaseOptions.ConnectionString!);    
         }
         else
         {

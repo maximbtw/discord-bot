@@ -1,6 +1,4 @@
-﻿using Bot.Application.ChatAi;
-using Bot.Application.Infrastructure.Configuration;
-using Bot.Application.Shared;
+﻿using Bot.Application.Shared;
 using Bot.Contracts;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -10,18 +8,13 @@ namespace Bot.Application.Handlers;
 
 internal class ChatAiHandler : IMessageCreatedHandler
 {
-    private readonly ChatAiResolver _resolver;
+    private readonly IChatService _chatService;
     private readonly ILogger<ChatAiHandler> _logger;
-    private readonly BotConfiguration _configuration;
 
-    public ChatAiHandler(
-        ChatAiResolver resolver,
-        ILogger<ChatAiHandler> logger,
-        BotConfiguration configuration)
+    public ChatAiHandler(IChatService chatService, ILogger<ChatAiHandler> logger)
     {
-        _resolver = resolver;
+        _chatService = chatService;
         _logger = logger;
-        _configuration = configuration;
     }
 
     public async Task Execute(DiscordClient client, MessageCreatedEventArgs args)
@@ -30,9 +23,7 @@ internal class ChatAiHandler : IMessageCreatedHandler
         {
             return;
         }
-        
-        IChatAiStrategy strategy = _resolver.Resolve(_configuration.AiChatOptions.Strategy);
-        
+
         var random = new Random();
         if (args.MentionedUsers.All(u => u.Id != client.CurrentUser.Id))
         {
@@ -40,19 +31,19 @@ internal class ChatAiHandler : IMessageCreatedHandler
             {
                 return;
             }
-            
+
             int roll = random.Next(0, 100);
-            if (roll >= strategy.RandomMessageChance)
+            if (roll >= _chatService.RandomMessageChance)
             {
                 return;
             }
         }
-        
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(strategy.TimeOutInSeconds));
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
         try
         {
-            await strategy.Execute(client, args, cts.Token);
+            await _chatService.HandleMessage(client, args, cts.Token);
         }
         catch (OperationCanceledException ex)
         {

@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Bot.Application;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Domain;
@@ -10,32 +9,33 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 IConfigurationRoot config = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddEnvironmentVariables()
     .Build();
 
-var configuration = config.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!;
 ILoggerFactory loggerFactory = LoggingConfigurator.CreateLoggerFactory();
 
 var services = new ServiceCollection();
 
 services.AddSingleton(loggerFactory);
-services.AddSingleton(configuration);
+services.AddSingleton<IConfiguration>(config);  
 
 services.AddLogging(); 
 
-services.RegisterDb(configuration.UseDb, configuration.DatabaseOptions?.ConnectionString);
+var botConfiguration = config.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!;
+
+services.RegisterDb(botConfiguration.DatabaseOptions);
 services.RegisterRepositories();
-services.RegisterUseCases(configuration);
+services.RegisterUseCases();
+services.RegisterAiChat(config);
 
 services.AddMemoryCache();
 
 var builder = DiscordClientBuilder.CreateDefault(
-    configuration.Token, 
+    botConfiguration.Token, 
     DiscordIntents.AllUnprivileged  | DiscordIntents.MessageContents, services);
 
-builder.RegisterCommands(configuration.Prefix);
+builder.RegisterCommands(botConfiguration.Prefix);
 builder.RegisterEvents(services);
 
 DiscordClient client = builder.Build();

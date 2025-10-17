@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Linq;
-using Bot.Application.ChatAi.OpenRouter;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
@@ -14,7 +13,6 @@ internal static class LoggingConfigurator
 
     private static readonly string[] SpecialLoggers =
     [
-        nameof(ChatAiOpenRouteLogger),
         "Microsoft.EntityFrameworkCore.Database.Command"
     ];
 
@@ -25,7 +23,6 @@ internal static class LoggingConfigurator
             
             .WriteFiltered("general",  excludeFilters: SpecialLoggers, minLevelToWriteInConsole: LogEventLevel.Information)
             
-            .WriteFiltered("open-router-requests", includeFilters: [nameof(ChatAiOpenRouteLogger)])
             .WriteFiltered(
                 "sql-requests",
                 includeFilters: ["Microsoft.EntityFrameworkCore.Database.Command"],

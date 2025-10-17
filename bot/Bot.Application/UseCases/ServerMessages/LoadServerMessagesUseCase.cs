@@ -1,5 +1,4 @@
 ﻿using System.Threading.Channels;
-using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Shared;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
@@ -14,29 +13,20 @@ public class LoadServerMessagesUseCase
 {
     private readonly DiscordClient _client;
     private readonly IMessageRepository _messageRepository;
-    private readonly BotConfiguration _configuration;
     private readonly IDbScopeProvider _scopeProvider;
 
     public LoadServerMessagesUseCase(
         IMessageRepository messageRepository,
         DiscordClient client,
-        BotConfiguration configuration,
         IDbScopeProvider scopeProvider)
     {
         _messageRepository = messageRepository;
         _client = client;
-        _configuration = configuration;
         _scopeProvider = scopeProvider;
     }
 
     public async ValueTask Execute(CommandContext context, int maxDegreeOfParallel, CancellationToken ct)
     {
-        if (!_configuration.UseDb)
-        {
-            await context.RespondAsync("Операция не поддерживается.");
-            return;
-        }
-        
         DiscordGuild server = context.Guild!;
 
         if (!_client.Guilds.TryGetValue(server.Id, out DiscordGuild? guild))

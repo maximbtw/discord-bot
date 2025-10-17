@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Bot.Application.Infrastructure.Configuration.AiChat;
+using Bot.Domain.Configuration;
 
 namespace Bot.Application.Infrastructure.Configuration;
 
@@ -11,10 +11,5 @@ public class BotConfiguration
     [Required]
     public string Prefix { get;  set; } = string.Empty;
     
-    public bool UseDb { get; set; }
-    
     public DatabaseOptions DatabaseOptions { get; set; } = null!;
-    
-    [Required]
-    public AiChatOptions AiChatOptions { get; set; } = null!;
 }

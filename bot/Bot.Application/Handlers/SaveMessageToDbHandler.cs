@@ -1,5 +1,4 @@
-﻿using Bot.Application.Infrastructure.Configuration;
-using Bot.Application.Shared;
+﻿using Bot.Application.Shared;
 using Bot.Contracts;
 using Bot.Contracts.Shared;
 using Bot.Domain.Message;
@@ -15,18 +14,15 @@ internal class SaveMessageToDbHandler : IMessageCreatedHandler
     private readonly IDbScopeProvider _scopeProvider;
     private readonly IMessageRepository _messageRepository;
     private readonly ICreatedMessageCache _createdMessageCache;
-    private readonly BotConfiguration _configuration;
 
     public SaveMessageToDbHandler(
         IMessageRepository messageRepository, 
         IDbScopeProvider scopeProvider,
-        ICreatedMessageCache createdMessageCache,
-        BotConfiguration configuration)
+        ICreatedMessageCache createdMessageCache)
     {
         _messageRepository = messageRepository;
         _scopeProvider = scopeProvider;
         _createdMessageCache = createdMessageCache;
-        _configuration = configuration;
     }
 
     public async Task Execute(DiscordClient client, MessageCreatedEventArgs args)
@@ -48,11 +44,6 @@ internal class SaveMessageToDbHandler : IMessageCreatedHandler
         MessageDto message = DiscordContentMapper.MapDiscordMessageToDto(args.Message);
 
         _createdMessageCache.Add(args.Guild.Id, args.Channel.Id, message);
-        
-        if (!_configuration.UseDb)
-        {
-            return;
-        }
 
         await using DbScope scope = _scopeProvider.GetDbScope();
 
