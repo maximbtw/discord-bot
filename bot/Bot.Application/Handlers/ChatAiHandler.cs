@@ -43,6 +43,7 @@ internal class ChatAiHandler : IMessageCreatedHandler
 
         try
         {
+            await args.Channel.TriggerTypingAsync();
             await _chatService.HandleMessage(client, args, cts.Token);
         }
         catch (OperationCanceledException ex)

@@ -15,28 +15,30 @@ IConfigurationRoot config = new ConfigurationBuilder()
 
 ILoggerFactory loggerFactory = LoggingConfigurator.CreateLoggerFactory();
 
-var services = new ServiceCollection();
-
-services.AddSingleton(loggerFactory);
-services.AddSingleton<IConfiguration>(config);  
-
-services.AddLogging(); 
-
 var botConfiguration = config.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!;
-
-services.RegisterDb(botConfiguration.DatabaseOptions);
-services.RegisterRepositories();
-services.RegisterUseCases();
-services.RegisterAiChat(config);
-
-services.AddMemoryCache();
 
 var builder = DiscordClientBuilder.CreateDefault(
     botConfiguration.Token, 
-    DiscordIntents.AllUnprivileged  | DiscordIntents.MessageContents, services);
+    DiscordIntents.AllUnprivileged  | DiscordIntents.MessageContents | DiscordIntents.GuildVoiceStates);
+
+builder.ConfigureServices(x =>
+{
+    x.AddSingleton(loggerFactory);
+    x.AddSingleton<IConfiguration>(config);
+    x.AddLogging(); 
+    
+    x.RegisterDb(botConfiguration.DatabaseOptions);
+    x.RegisterRepositories();
+    x.RegisterUseCases();
+    x.RegisterAiChat(config);
+
+    x.AddMemoryCache();
+
+    //x.AddLavalink();
+});
 
 builder.RegisterCommands(botConfiguration.Prefix);
-builder.RegisterEvents(services);
+builder.RegisterEvents();
 
 DiscordClient client = builder.Build();
 

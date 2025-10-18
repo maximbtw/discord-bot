@@ -42,15 +42,13 @@ public static class DependencyInjectionExtensions
         });
     }
     
-    public static void RegisterEvents(this DiscordClientBuilder builder, ServiceCollection services)
+    public static void RegisterEvents(this DiscordClientBuilder builder)
     {
-        ServiceProvider serviceProvider = services.BuildServiceProvider();
-        
         builder.ConfigureEventHandlers(x =>
         {
             x.HandleMessageCreated((client, args) =>
             {
-                IEnumerable<IMessageCreatedHandler> handlers = serviceProvider.GetServices<IMessageCreatedHandler>();
+                IEnumerable<IMessageCreatedHandler> handlers = client.ServiceProvider.GetServices<IMessageCreatedHandler>();
                 IEnumerable<Task> tasks = handlers.Select(async handler =>
                 {
                     await handler.Execute(client, args);
