@@ -33,8 +33,6 @@ builder.ConfigureServices(x =>
     x.RegisterAiChat(config);
 
     x.AddMemoryCache();
-
-    //x.AddLavalink();
 });
 
 builder.RegisterCommands(botConfiguration.Prefix);
