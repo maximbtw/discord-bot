@@ -4,6 +4,7 @@ using Bot.Application.Infrastructure.Configuration;
 using Bot.Domain;
 using Bot.Host;
 using DSharpPlus;
+using DSharpPlus.VoiceNext;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,10 @@ builder.ConfigureServices(x =>
 
 builder.RegisterCommands(botConfiguration.Prefix);
 builder.RegisterEvents();
+builder.UseVoiceNext(new VoiceNextConfiguration
+{
+    AudioFormat = AudioFormat.Default
+});
 
 DiscordClient client = builder.Build();
 

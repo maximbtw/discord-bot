@@ -14,6 +14,7 @@
     <PackageReference Include="DSharpPlus" />
     <PackageReference Include="DSharpPlus.Commands" />
     <PackageReference Include="DSharpPlus.Interactivity" />
+    <PackageReference Include="DSharpPlus.VoiceNext" />
 
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
