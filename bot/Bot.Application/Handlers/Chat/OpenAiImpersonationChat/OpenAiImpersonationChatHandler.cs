@@ -3,11 +3,9 @@ using System.Text.RegularExpressions;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Contracts;
 using Bot.Contracts.Handlers.AiChat;
-using Bot.Contracts.Shared;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus;
-using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
@@ -56,7 +54,14 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
         inputMessages.Add(new SystemChatMessage(systemMessage));
 
-        IEnumerable<ChatMessage> historyMessages = LoadHistoryMessagesFromCache(args);
+        IEnumerable<ChatMessage> historyMessages = ChatHelper.LoadHistoryMessagesFromCache(
+                _messageCache, 
+                args.Guild.Id, 
+                args.Channel.Id, 
+                args.Message.Id, 
+                _options.MaxHistoryMessageInputTokenCount,
+                _options.MaxChatHistoryMessages);
+        
         inputMessages.AddRange(historyMessages);
 
         ChatMessage userMessage = new UserChatMessage(args.Message.Content)
@@ -68,7 +73,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
         var options = new ChatCompletionOptions
         {
-            MaxOutputTokenCount = 200,
+            MaxOutputTokenCount = _options.MaxOutputTokenCount,
             Temperature = 0.7f,
             TopP = 0.9f,
             FrequencyPenalty = 0.2f,
@@ -79,43 +84,12 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
         string responseText = result.Value.Content[0].Text;
 
-        IAsyncEnumerable<DiscordMember> membersAsync = args.Guild.GetAllMembersAsync(ct);
-
-        var userIndex = new Dictionary<string, ulong>();
-
-        await foreach (DiscordMember member in membersAsync)
+        if (_options.ReplaceMentions)
         {
-            userIndex.Add(member.Username, member.Id);
+            responseText = await ChatHelper.ReplaceUserMentions(responseText, args.Guild, ct);   
         }
-
-        responseText = ReplaceUserMentions(responseText, userIndex);
 
         await args.Message.RespondAsync(responseText);
-    }
-
-    private IEnumerable<ChatMessage> LoadHistoryMessagesFromCache(MessageCreatedEventArgs args)
-    {
-        List<MessageDto> cachedMessages = _messageCache.GetLastMessages(args.Guild.Id, args.Channel.Id)
-            .Where(x => x.Id != (long)args.Message.Id)
-            .TakeLast(10)
-            .ToList();
-
-        cachedMessages.Reverse();
-
-        foreach (MessageDto cachedMessage in cachedMessages)
-        {
-            if (cachedMessage.UserIsBot)
-            {
-                yield return new AssistantChatMessage(Truncate(cachedMessage.Content, 200));
-            }
-            else
-            {
-                yield return new UserChatMessage(Truncate(cachedMessage.Content,200))
-                {
-                    ParticipantName = cachedMessage.UserName
-                };
-            }
-        }
     }
 
     private List<MessageOrm> GetImpersonationMessages(MessageCreatedEventArgs args, DbScope scope)
@@ -126,12 +100,11 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
             .GetQueryable(scope)
             .Where(x => x.ServerId == (long)args.Guild.Id);
         
-        if (OpenAiImpersonationChatOptions.ImpersonationUseId != null)
+        if (OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
         {
-            messages = messages.Where(x => (ulong)x.UserId == OpenAiImpersonationChatOptions.ImpersonationUseId);
+            messages = messages.Where(x => (ulong)x.UserId == userId);
         }
         
-        int maxOutputToken = 10000;
         int countToken = 0;
         foreach (MessageOrm userMessage in messages)
         {
@@ -144,7 +117,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
             impersonationMessages.Add(userMessage);
             
-            if (countToken > maxOutputToken)
+            if (countToken > _options.MaxExampleMessagesTokenCount)
             {
                 break;
             }
@@ -199,45 +172,4 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
     
     private static readonly Regex UrlRegex = new(@"https?://\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex EmojiRegex = new(@":[a-zA-Z0-9_]+:|[\u2190-\u21FF\u2600-\u27BF\uE000-\uF8FF]", RegexOptions.Compiled);
-    
-    private static string Truncate(string value, int? maxLength)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-
-        if (maxLength == null)
-        {
-            return value;
-        }
-
-        if (value.Length <= maxLength)
-        {
-            return value;
-        }
-
-        int lastSpace = value.LastIndexOf(' ', (int)maxLength);
-        return lastSpace > 0 ? value[..lastSpace] : value[..(int)maxLength];
-    }
-    
-    public static string ReplaceUserMentions(string text, Dictionary<string, ulong> userIds)
-    {
-        if (string.IsNullOrEmpty(text) || userIds.Count == 0)
-            return text;
-        
-        var regex = new Regex(@"@(\w+)", RegexOptions.Compiled);
-
-        var result = regex.Replace(text, match =>
-        {
-            var username = match.Groups[1].Value;
-            if (userIds.TryGetValue(username, out ulong id))
-            {
-                return $"<@{id}>";
-            }
-            return match.Value;
-        });
-
-        return result;
-    }
 }

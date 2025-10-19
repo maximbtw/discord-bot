@@ -13,6 +13,6 @@ internal class InMemoryDbScopeProvider : IDbScopeProvider
 
     public DbScope GetDbScope(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
     {
-        return new DbScope(_context);
+        return new DbScope(_context, useTransaction: false);
     }
 }

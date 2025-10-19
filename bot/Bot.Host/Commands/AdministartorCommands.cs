@@ -51,7 +51,7 @@ internal class AdministartorCommands : DiscordCommandsGroupBase<AdministartorCom
     [RoleCheck(Role.SuperUser)]
     public async ValueTask SetImmersionUser(CommandContext context, DiscordUser user)
     {
-        OpenAiImpersonationChatOptions.ImpersonationUseId = user.Id;
+        OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex[context.Guild!.Id] = user.Id;
 
         await context.RespondAsync("Done!");
     }

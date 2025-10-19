@@ -2,7 +2,6 @@
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Contracts;
 using Bot.Contracts.Handlers.AiChat;
-using Bot.Contracts.Shared;
 using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -36,7 +35,14 @@ internal class OpenAiSimpleChatHandler : IAiChatHandler
             inputMessages.Add(_options.SystemMessage);
         }
         
-        IEnumerable<ChatMessage> historyMessages = LoadHistoryMessagesFromCache(args);
+        IEnumerable<ChatMessage> historyMessages = ChatHelper.LoadHistoryMessagesFromCache(
+            _messageCache, 
+            args.Guild.Id, 
+            args.Channel.Id, 
+            args.Message.Id, 
+            _options.MaxInputTokenCount,
+            _options.MaxChatHistoryMessages);
+        
         inputMessages.AddRange(historyMessages);
         
         ChatMessage userMessage = new UserChatMessage(args.Message.Content)
@@ -60,51 +66,5 @@ internal class OpenAiSimpleChatHandler : IAiChatHandler
         string responseText = result.Value.Content[0].Text;
         
         await args.Message.RespondAsync(responseText);
-    }
-
-    private IEnumerable<ChatMessage> LoadHistoryMessagesFromCache(MessageCreatedEventArgs args)
-    {
-        List<MessageDto> cachedMessages = _messageCache.GetLastMessages(args.Guild.Id, args.Channel.Id)
-            .Where(x => x.Id != (long)args.Message.Id)
-            .TakeLast(_options.MaxChatHistoryMessages)
-            .ToList();
-
-        cachedMessages.Reverse();
-
-        foreach (MessageDto cachedMessage in cachedMessages)
-        {
-            if (cachedMessage.UserIsBot)
-            {
-                yield return new AssistantChatMessage(Truncate(cachedMessage.Content, _options.MaxInputTokenCount));
-            }
-            else
-            {
-                yield return new UserChatMessage(Truncate(cachedMessage.Content, _options.MaxInputTokenCount))
-                {
-                    ParticipantName = cachedMessage.UserName
-                };
-            }
-        }
-    }
-
-    private static string Truncate(string value, int? maxLength)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-
-        if (maxLength == null)
-        {
-            return value;
-        }
-
-        if (value.Length <= maxLength)
-        {
-            return value;
-        }
-
-        int lastSpace = value.LastIndexOf(' ', (int)maxLength);
-        return lastSpace > 0 ? value[..lastSpace] : value[..(int)maxLength];
     }
 }
