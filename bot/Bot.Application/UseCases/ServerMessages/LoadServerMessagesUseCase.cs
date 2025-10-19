@@ -25,7 +25,7 @@ public class LoadServerMessagesUseCase
         _scopeProvider = scopeProvider;
     }
 
-    public async ValueTask Execute(CommandContext context, int maxDegreeOfParallel, CancellationToken ct)
+    public async ValueTask Execute(CommandContext context, List<DiscordChannel>? channels = null, CancellationToken ct = default)
     {
         DiscordGuild server = context.Guild!;
 
@@ -35,11 +35,13 @@ public class LoadServerMessagesUseCase
             return;
         }
 
-        await using DbScope scope = _scopeProvider.GetDbScope();
-
-        bool messagesExist = await _messageRepository
-            .GetQueryable(scope)
-            .AnyAsync(x => x.ServerId == (long)server.Id, ct);
+        bool messagesExist = false;
+        await using (DbScope scope = _scopeProvider.GetDbScope())
+        {
+            messagesExist = await _messageRepository
+                .GetQueryable(scope)
+                .AnyAsync(x => x.ServerId == (long)server.Id, ct);   
+        }
 
         if (messagesExist)
         {
@@ -48,16 +50,16 @@ public class LoadServerMessagesUseCase
             return;
         }
 
-        await LoadMessagesAndSaveToDb(context, guild, maxDegreeOfParallel, ct);
+        await LoadMessagesAndSaveToDb(context, guild, channels, ct);
     }
 
     private async Task LoadMessagesAndSaveToDb(
         CommandContext context,
         DiscordGuild guild,
-        int maxDegreeOfParallel,
-        CancellationToken ct)
+        List<DiscordChannel>? channels = null,
+        CancellationToken ct = default)
     {
-        int channelsCount = guild.Channels.Count(x => x.Value.Type == DiscordChannelType.Text);
+        int channelsCount = channels?.Count ?? guild.Channels.Count(x => x.Value.Type == DiscordChannelType.Text);
         
         var dispatcher = await ProgressMessageDispatcher.Create(context, channelsCount);
 
@@ -69,8 +71,8 @@ public class LoadServerMessagesUseCase
 
         Task saveToDbTask = SaveMessagesToDb(dbSaverChannel.Reader, dispatcher, ct);
 
-        var semaphore = new SemaphoreSlim(maxDegreeOfParallel);
-        List<Task> tasks = guild.Channels.Values
+        var semaphore = new SemaphoreSlim(8);
+        List<Task> tasks = (channels ?? guild.Channels.Values)
             .Where(x => x.Type == DiscordChannelType.Text)
             .Select(async discordChannel =>
             {
@@ -153,6 +155,7 @@ public class LoadServerMessagesUseCase
         {
             await using DbScope scope = _scopeProvider.GetDbScope();
             await _messageRepository.BulkInsert(buffer, scope, ct);
+            await scope.CommitAsync(ct);
             await dispatcher.AddSavedMessages(buffer.Count);
 
             buffer.Clear();

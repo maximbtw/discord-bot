@@ -1,5 +1,6 @@
 ﻿using Bot.Application.Shared;
 using Bot.Contracts;
+using Bot.Contracts.Handlers;
 using Bot.Contracts.Shared;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
@@ -7,25 +8,22 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
-namespace Bot.Application.Handlers;
+namespace Bot.Application.Handlers.EventHandler;
 
-internal class SaveMessageToDbHandler : IMessageCreatedHandler
+internal class SaveMessageToDbEventHandler : IMessageCreatedEventHandler
 {
-    private readonly IDbScopeProvider _scopeProvider;
     private readonly IMessageRepository _messageRepository;
     private readonly ICreatedMessageCache _createdMessageCache;
 
-    public SaveMessageToDbHandler(
+    public SaveMessageToDbEventHandler(
         IMessageRepository messageRepository, 
-        IDbScopeProvider scopeProvider,
         ICreatedMessageCache createdMessageCache)
     {
         _messageRepository = messageRepository;
-        _scopeProvider = scopeProvider;
         _createdMessageCache = createdMessageCache;
     }
 
-    public async Task Execute(DiscordClient client, MessageCreatedEventArgs args)
+    public async Task Execute(DiscordClient client, MessageCreatedEventArgs args, DbScope scope)
     {
         if (!DiscordMessageHelper.MessageIsValid(args.Message, client.CurrentUser.Id))
         {
@@ -44,8 +42,6 @@ internal class SaveMessageToDbHandler : IMessageCreatedHandler
         MessageDto message = DiscordContentMapper.MapDiscordMessageToDto(args.Message);
 
         _createdMessageCache.Add(args.Guild.Id, args.Channel.Id, message);
-
-        await using DbScope scope = _scopeProvider.GetDbScope();
 
         await _messageRepository.Insert(DiscordContentMapper.MapDiscordMessage(args.Message), scope);
 

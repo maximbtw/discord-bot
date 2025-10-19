@@ -12,4 +12,8 @@
         <PackageReference Include="DSharpPlus" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Bot.Domain\Bot.Domain.csproj" />
+    </ItemGroup>
+
 </Project>

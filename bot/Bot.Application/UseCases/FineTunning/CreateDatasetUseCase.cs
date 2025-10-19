@@ -10,7 +10,7 @@ using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Bot.Application.UseCases.Ai;
+namespace Bot.Application.UseCases.FineTunning;
 
 public class CreateDatasetUseCase
 {

@@ -19,7 +19,7 @@ var botConfiguration = config.GetSection(nameof(BotConfiguration)).Get<BotConfig
 
 var builder = DiscordClientBuilder.CreateDefault(
     botConfiguration.Token, 
-    DiscordIntents.AllUnprivileged  | DiscordIntents.MessageContents | DiscordIntents.GuildVoiceStates);
+    DiscordIntents.AllUnprivileged  | DiscordIntents.MessageContents | DiscordIntents.GuildVoiceStates | DiscordIntents.GuildMembers);
 
 builder.ConfigureServices(x =>
 {

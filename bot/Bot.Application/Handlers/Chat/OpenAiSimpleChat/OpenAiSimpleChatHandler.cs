@@ -1,67 +1,72 @@
 ﻿using System.ClientModel;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Contracts;
+using Bot.Contracts.Handlers.AiChat;
 using Bot.Contracts.Shared;
+using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
 
-namespace Bot.Application.Ai;
+namespace Bot.Application.Handlers.Chat.OpenAiSimpleChat;
 
-internal class OpenAiChatService : IChatService
+internal class OpenAiSimpleChatHandler : IAiChatHandler
 {
     private readonly ICreatedMessageCache _messageCache;
     private readonly ChatClient _client;
-    private readonly OpenAiSettings _openAiSettings;
+    private readonly OpenAiSimpleChatOptions _options;
 
-    public OpenAiChatService(
+    public OpenAiSimpleChatHandler(
         ICreatedMessageCache messageCache,
         IConfiguration configuration,
         ChatClient client)
     {
         _messageCache = messageCache;
         _client = client;
-        _openAiSettings = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!;
+        _options = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!.ChatOptions.SimpleChatOptions;
     }
 
-    public int RandomMessageChance => _openAiSettings.ChatOptions.RandomMessageChance;
-
-    public async Task HandleMessage(DiscordClient discordClient, MessageCreatedEventArgs args, CancellationToken ct)
+    public async Task HandleMessage(DiscordClient discordClient, MessageCreatedEventArgs args, DbScope scope, CancellationToken ct)
     {
+        var inputMessages = new List<ChatMessage>();
+
+        if (!string.IsNullOrEmpty(_options.SystemMessage))
+        {
+            inputMessages.Add(_options.SystemMessage);
+        }
+        
         IEnumerable<ChatMessage> historyMessages = LoadHistoryMessagesFromCache(args);
-        ChatMessage systemMessage = new SystemChatMessage(_openAiSettings.ChatOptions.SystemMessage);
+        inputMessages.AddRange(historyMessages);
+        
         ChatMessage userMessage = new UserChatMessage(args.Message.Content)
         {
             ParticipantName = args.Author.Username,
         };
         
-        var messages = new List<ChatMessage>();
-        messages.Add(systemMessage);
-        messages.AddRange(historyMessages);
-        messages.Add(userMessage);
+        inputMessages.Add(userMessage);
 
         var options = new ChatCompletionOptions
         {
-            MaxOutputTokenCount = _openAiSettings.ChatOptions.MaxOutputTokenCount,
+            MaxOutputTokenCount = _options.MaxOutputTokenCount,
             Temperature = 0.7f,       
             TopP = 0.9f,              
             FrequencyPenalty = 0.2f, 
             PresencePenalty = 0.3f
         };
 
-        ClientResult<ChatCompletion> result = await _client.CompleteChatAsync(messages, options, ct);
+        ClientResult<ChatCompletion> result = await _client.CompleteChatAsync(inputMessages, options, ct);
 
         string responseText = result.Value.Content[0].Text;
         
         await args.Message.RespondAsync(responseText);
     }
 
-    private IEnumerable<ChatMessage> LoadHistoryMessagesFromCache( MessageCreatedEventArgs args)
+    private IEnumerable<ChatMessage> LoadHistoryMessagesFromCache(MessageCreatedEventArgs args)
     {
         List<MessageDto> cachedMessages = _messageCache.GetLastMessages(args.Guild.Id, args.Channel.Id)
             .Where(x => x.Id != (long)args.Message.Id)
-            .TakeLast(_openAiSettings.ChatOptions.MaxChatHistoryMessages)
+            .TakeLast(_options.MaxChatHistoryMessages)
             .ToList();
 
         cachedMessages.Reverse();
@@ -70,11 +75,11 @@ internal class OpenAiChatService : IChatService
         {
             if (cachedMessage.UserIsBot)
             {
-                yield return new AssistantChatMessage(Truncate(cachedMessage.Content, _openAiSettings.ChatOptions.MaxInputTokenCount));
+                yield return new AssistantChatMessage(Truncate(cachedMessage.Content, _options.MaxInputTokenCount));
             }
             else
             {
-                yield return new UserChatMessage(Truncate(cachedMessage.Content, _openAiSettings.ChatOptions.MaxInputTokenCount))
+                yield return new UserChatMessage(Truncate(cachedMessage.Content, _options.MaxInputTokenCount))
                 {
                     ParticipantName = cachedMessage.UserName
                 };
@@ -101,10 +106,5 @@ internal class OpenAiChatService : IChatService
 
         int lastSpace = value.LastIndexOf(' ', (int)maxLength);
         return lastSpace > 0 ? value[..lastSpace] : value[..(int)maxLength];
-    }
-
-    private string RemoveBotTagFromMessage(string message, string botName)
-    {
-        return message.Replace($"@{botName}", string.Empty).Trim();
     }
 }

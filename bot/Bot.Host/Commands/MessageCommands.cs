@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.Application.Infrastructure.Checks.Access;
@@ -47,11 +49,11 @@ internal class MessageCommands : DiscordCommandsGroupBase<MessageCommands>
     [Command("load")]
     [RoleCheck(Role.SuperUser)]
     [Description("Loads all server messages and saves them to the database.")]
-    public async ValueTask LoadMessages(CommandContext context, int maxDegreeOfParallel = 5)
+    public async ValueTask LoadMessages(CommandContext context, params DiscordChannel[] channels)
     {
         await ExecuteAsync(context, () => _loadServerMessagesUseCase.Execute(
             context,
-            maxDegreeOfParallel,
+            channels.Any() ? channels.ToList() : null,
             CancellationToken.None));
     }
 }

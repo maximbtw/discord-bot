@@ -1,6 +1,6 @@
 ﻿using DSharpPlus.Commands;
 
-namespace Bot.Application.UseCases.Ai;
+namespace Bot.Application.UseCases.FineTunning;
 
 public class TrainModelByDatasetUseCase
 {

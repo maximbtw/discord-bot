@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Bot.Application.Infrastructure.Checks.Access;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Contracts;
+using Bot.Contracts.Handlers;
+using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.TextCommands;
@@ -48,10 +50,12 @@ public static class DependencyInjectionExtensions
         {
             x.HandleMessageCreated((client, args) =>
             {
-                IEnumerable<IMessageCreatedHandler> handlers = client.ServiceProvider.GetServices<IMessageCreatedHandler>();
+                IEnumerable<IMessageCreatedEventHandler> handlers = client.ServiceProvider.GetServices<IMessageCreatedEventHandler>();
+                var scopeProvider = client.ServiceProvider.GetService<IDbScopeProvider>();
                 IEnumerable<Task> tasks = handlers.Select(async handler =>
                 {
-                    await handler.Execute(client, args);
+                    await using DbScope scope = scopeProvider!.GetDbScope();
+                    await handler.Execute(client, args, scope);
                 });
 
                 _ = Task.WhenAll(tasks);

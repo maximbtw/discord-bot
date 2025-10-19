@@ -1,12 +1,16 @@
 ﻿using System.ClientModel;
-using Bot.Application.Ai;
 using Bot.Application.Handlers;
+using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
+using Bot.Application.Handlers.Chat.OpenAiSimpleChat;
+using Bot.Application.Handlers.EventHandler;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Shared;
-using Bot.Application.UseCases.Ai;
+using Bot.Application.UseCases.FineTunning;
 using Bot.Application.UseCases.Misc;
 using Bot.Application.UseCases.ServerMessages;
 using Bot.Contracts;
+using Bot.Contracts.Handlers;
+using Bot.Contracts.Handlers.AiChat;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI;
@@ -32,8 +36,8 @@ public static class DependencyInjectionExtensions
         services.AddTransient<GetJokeUseCase>();
         
         // Handlers
-        services.AddTransient<IMessageCreatedHandler, ChatAiHandler>();
-        services.AddTransient<IMessageCreatedHandler, SaveMessageToDbHandler>();
+        services.AddTransient<IMessageCreatedEventHandler, SendMessageToOpenAiEventHandler>();
+        services.AddTransient<IMessageCreatedEventHandler, SaveMessageToDbEventHandler>();
 
         services.AddSingleton<ICreatedMessageCache, CreatedMessageCache>();
     }
@@ -55,6 +59,6 @@ public static class DependencyInjectionExtensions
             return new ChatClient(settings.ChatOptions.Model, credential, options);
         });
 
-        services.AddTransient<IChatService, OpenAiChatService>();
+        services.AddTransient<IAiChatHandler, OpenAiImpersonationChatHandler>();
     }
 }
