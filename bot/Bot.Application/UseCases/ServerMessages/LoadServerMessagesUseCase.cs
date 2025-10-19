@@ -154,7 +154,18 @@ public class LoadServerMessagesUseCase
         async Task SaveToDb()
         {
             await using DbScope scope = _scopeProvider.GetDbScope();
-            await _messageRepository.BulkInsert(buffer, scope, ct);
+
+            if (_scopeProvider.DatabaseIsRelation())
+            {
+                await _messageRepository.BulkInsert(buffer, scope, ct);   
+            }
+            else
+            {
+                foreach (MessageOrm message in buffer)
+                {
+                    await _messageRepository.Insert(message, scope, ct);
+                }
+            }
             await scope.CommitAsync(ct);
             await dispatcher.AddSavedMessages(buffer.Count);
 

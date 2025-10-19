@@ -15,4 +15,6 @@ internal class InMemoryDbScopeProvider : IDbScopeProvider
     {
         return new DbScope(_context, useTransaction: false);
     }
+
+    public bool DatabaseIsRelation() => false;
 }
