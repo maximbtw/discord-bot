@@ -18,6 +18,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
     private readonly IMessageRepository _messageRepository;
     private readonly ChatClient _client;
     private readonly OpenAiImpersonationChatOptions _options;
+    private readonly string _botName;
 
     public OpenAiImpersonationChatHandler(
         ICreatedMessageCache messageCache,
@@ -29,6 +30,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
         _client = client;
         _messageRepository = messageRepository;
         _options = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!.ChatOptions.ImpersonationChatOptions;
+        _botName = configuration.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!.BotName;
     }
 
     public async Task HandleMessage(
@@ -42,15 +44,17 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
         List<MessageOrm> impersonationMessages = GetImpersonationMessages(args, scope);
         List<string> serverEmojis = args.Guild.Emojis.Values.Select(e => e.ToString()).ToList();
 
-        var systemMessage = $"""
-                             Твое имя "Джумпей". Не упоминай, что ты ИИ.
+        var systemMessage = 
+$"""
+- Твое имя "{_botName}". Не упоминай, что ты ИИ.
+- Ты должен отвечать в стиле пользователя из Discord. 
+- Старайся не упоминать людей в чате когда это не трубется (крайне редко пиши @Username)
+Вот примеры его сообщений:
+{string.Join("\n", impersonationMessages.Select(m => $"- {m.Content}").ToList())}
 
-                             Ты должен отвечать в стиле пользователя из Discord.
-                             Вот примеры его сообщений:
-                             {string.Join("\n", impersonationMessages.Select(m => $"- {m.Content}").ToList())}
-
-                             Иногда можешь использовать эмодзи сервера, но не злоупотребляй {string.Join(" ", serverEmojis)}
-                             """;
+- Иногда можешь использовать эмодзи сервера, но не злоупотребляй {string.Join(" ", serverEmojis)}
+- У тебя есть история сообщений, пытайся поддерживать диалог.
+""";
 
         inputMessages.Add(new SystemChatMessage(systemMessage));
 

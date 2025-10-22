@@ -14,24 +14,28 @@ internal class SendMessageToOpenAiEventHandler : IMessageCreatedEventHandler
 {
     private readonly IAiChatHandler _aiChatHandler;
     private readonly ILogger<SendMessageToOpenAiEventHandler> _logger;
-    private readonly IDbScopeProvider _scopeProvider;
     private readonly ChatOptions _options;
     
 
     public SendMessageToOpenAiEventHandler(
         IAiChatHandler aiChatHandler, 
         IConfiguration configuration,
-        ILogger<SendMessageToOpenAiEventHandler> logger, IDbScopeProvider scopeProvider)
+        ILogger<SendMessageToOpenAiEventHandler> logger)
     {
         _aiChatHandler = aiChatHandler;
         _options =  configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!.ChatOptions;
         _logger = logger;
-        _scopeProvider = scopeProvider;
     }
 
     public async Task Execute(DiscordClient client, MessageCreatedEventArgs args, DbScope scope)
     {
         if (!DiscordMessageHelper.MessageIsValid(args.Message, client.CurrentUser.Id))
+        {
+            return;
+        }
+
+        // Не отвечать самому себе.
+        if (args.Author.Id == client.CurrentUser.Id)
         {
             return;
         }
