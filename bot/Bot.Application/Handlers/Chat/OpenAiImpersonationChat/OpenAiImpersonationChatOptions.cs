@@ -8,7 +8,7 @@ public class OpenAiImpersonationChatOptions
     
     public int MaxChatHistoryMessages { get; set; } = 20;
     
-    public int MaxOutputTokenCount { get; set; }
+    public int? MaxOutputTokenCount { get; set; }
     
     public int MaxHistoryMessageInputTokenCount { get; set; }
     
