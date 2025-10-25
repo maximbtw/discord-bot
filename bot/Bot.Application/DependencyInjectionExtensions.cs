@@ -4,6 +4,7 @@ using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
 using Bot.Application.Handlers.Chat.OpenAiSimpleChat;
 using Bot.Application.Handlers.EventHandler;
 using Bot.Application.Infrastructure.Configuration;
+using Bot.Application.Services;
 using Bot.Application.Shared;
 using Bot.Application.UseCases.FineTunning;
 using Bot.Application.UseCases.Misc;
@@ -11,6 +12,7 @@ using Bot.Application.UseCases.ServerMessages;
 using Bot.Contracts;
 using Bot.Contracts.Handlers;
 using Bot.Contracts.Handlers.AiChat;
+using Bot.Contracts.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI;
@@ -40,6 +42,7 @@ public static class DependencyInjectionExtensions
         services.AddTransient<IMessageCreatedEventHandler, SaveMessageToDbEventHandler>();
 
         services.AddSingleton<ICreatedMessageCache, CreatedMessageCache>();
+        services.AddScoped<IMessageService, MessageService>();
     }
     
     public static void RegisterAiChat(this IServiceCollection services, IConfiguration configuration)

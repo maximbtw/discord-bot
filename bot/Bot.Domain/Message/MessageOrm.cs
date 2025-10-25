@@ -8,35 +8,43 @@ public class MessageOrm
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public long Id { get; set; } 
+    [MaxLength(20)]
+    public string Id { get; set; }  = string.Empty;
     
-    public long UserId { get; set; } 
+    [MaxLength(20)]
+    public string UserId { get; set; }  = string.Empty;
     
-    public string UserName { get; set; } = default!;
+    [MaxLength(32)]
+    public string UserNickname { get; set; } = string.Empty;
     
     public bool UserIsBot { get; set; }
     
-    public long ChannelId { get; set; } 
+    [MaxLength(20)]
+    public string ChannelId { get; set; }  = string.Empty;
     
-    public long ServerId { get; set; } 
+    [MaxLength(20)]
+    public string GuildId { get; set; }  = string.Empty;
 
-    public string? Content { get; set; }
+    [MaxLength(10000)]
+    public string Content { get; set; } = string.Empty;
 
     public DateTime Timestamp { get; set; }
 
-    public long? ReplyToMessageId { get; set; }
-    
+    [MaxLength(20)]
+    public string? ReplyToMessageId { get; set; }
+
+    [MaxLength(10000)]
     public string? MentionedUserIdsJson { get; set; }
 
     public bool HasAttachments { get; set; }
     
     [NotMapped]
-    public List<long> MentionedUserIds
+    public List<string> MentionedUserIds
     {
         get => string.IsNullOrEmpty(MentionedUserIdsJson)
-            ? new List<long>()
-            : System.Text.Json.JsonSerializer.Deserialize<List<long>>(MentionedUserIdsJson)!;
+            ? new List<string>()
+            : System.Text.Json.JsonSerializer.Deserialize<List<string>>(MentionedUserIdsJson)!;
 
-        set => MentionedUserIdsJson = System.Text.Json.JsonSerializer.Serialize(value);
+        init => MentionedUserIdsJson = System.Text.Json.JsonSerializer.Serialize(value);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Bot.Contracts.Services;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
@@ -9,14 +10,14 @@ namespace Bot.Application.UseCases.ServerMessages;
 
 public class GetServerMessagesStatsUseCase
 {
-    private readonly IMessageRepository _messageRepository;
+    private readonly IMessageService _messageService;
     private readonly IDbScopeProvider _scopeProvider;
 
     public GetServerMessagesStatsUseCase(
-        IMessageRepository messageRepository,
+        IMessageService messageService,
         IDbScopeProvider scopeProvider)
     {
-        _messageRepository = messageRepository;
+        _messageService = messageService;
         _scopeProvider = scopeProvider;
     }
     
@@ -24,7 +25,7 @@ public class GetServerMessagesStatsUseCase
     {
         await context.RespondAsync("Ищу статистику...");
         
-        List<UserStats> stats = await GetStats((long)context.Guild!.Id, (long?)user?.Id, ct);
+        List<UserStats> stats = await GetStats(context.Guild!.Id, user?.Id, ct);
         
         var sb = new StringBuilder();
         if (user == null)
@@ -51,23 +52,23 @@ public class GetServerMessagesStatsUseCase
         await context.EditResponseAsync(new DiscordWebhookBuilder().WithContent(sb.ToString()));
     }
 
-    private async Task<List<UserStats>> GetStats(long serverId, long? userId, CancellationToken ct)
+    private async Task<List<UserStats>> GetStats(ulong guildId, ulong? userId, CancellationToken ct)
     {
         await using DbScope scope = _scopeProvider.GetDbScope();
         
-        IQueryable<MessageOrm> query = _messageRepository
+        IQueryable<MessageOrm> query = _messageService
             .GetQueryable(scope)
-            .Where(x => x.ServerId == serverId && !x.UserIsBot);
+            .Where(x => x.GuildId == guildId.ToString() && !x.UserIsBot);
 
         if (userId != null)
         {
-            query = query.Where(x => x.UserId == userId);
+            query = query.Where(x => x.UserId == userId.ToString());
         }
         
         return await query
             .GroupBy(x => x.UserId)
             .OrderByDescending(x=>x.Count())
-            .Select(g => new UserStats(g.First().UserName, g.Count()))
+            .Select(g => new UserStats(g.First().UserNickname, g.Count()))
             .ToListAsync(ct);
     }
     

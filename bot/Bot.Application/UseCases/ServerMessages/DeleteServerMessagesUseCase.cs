@@ -1,4 +1,4 @@
-﻿using Bot.Domain.Message;
+﻿using Bot.Contracts.Services;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
@@ -8,23 +8,23 @@ namespace Bot.Application.UseCases.ServerMessages;
 public class DeleteServerMessagesUseCase
 {
     private readonly IDbScopeProvider _scopeProvider;
-    private readonly IMessageRepository _messageRepository;
+    private readonly IMessageService _messageService;
 
     public DeleteServerMessagesUseCase(
         IDbScopeProvider scopeProvider, 
-        IMessageRepository messageRepository)
+        IMessageService messageService)
     {
         _scopeProvider = scopeProvider;
-        _messageRepository = messageRepository;
+        _messageService = messageService;
     }
 
-    public async ValueTask Execute(CommandContext context, long serverId, CancellationToken ct)
+    public async ValueTask Execute(CommandContext context, ulong guildId, CancellationToken ct)
     {
         await context.RespondAsync("Удаление сообщений сервера начато...");
         
         await using DbScope scope = _scopeProvider.GetDbScope();
         
-        await _messageRepository.DeleteServerMessages(serverId, scope, ct);
+        await _messageService.DeleteGuildMessages(guildId, channelIds: [], scope, ct);
 
         await scope.CommitAsync(ct);
         

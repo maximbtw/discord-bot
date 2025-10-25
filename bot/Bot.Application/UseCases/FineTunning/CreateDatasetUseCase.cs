@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Unicode;
 using Bot.Application.Dataset;
 using Bot.Application.Dataset.Entries;
+using Bot.Contracts.Services;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
@@ -14,12 +15,12 @@ namespace Bot.Application.UseCases.FineTunning;
 
 public class CreateDatasetUseCase
 {
-    private readonly IMessageRepository _messageRepository;
+    private readonly IMessageService _messageService;
     private readonly IDbScopeProvider _scopeProvider;
 
-    public CreateDatasetUseCase(IMessageRepository messageRepository, IDbScopeProvider scopeProvider)
+    public CreateDatasetUseCase(IMessageService messageService, IDbScopeProvider scopeProvider)
     {
-        _messageRepository = messageRepository;
+        _messageService = messageService;
         _scopeProvider = scopeProvider;
     }
 
@@ -29,15 +30,12 @@ public class CreateDatasetUseCase
     {
         await context.RespondAsync("Начинаю готовить датасет..");
 
-        DatasetCreator creator = new((long)context.User.Id, 5);
-
-        long serverId = (long)context.Guild!.Id;
+        DatasetCreator creator = new(context.User.Id, 5);
         
         await using DbScope scope = _scopeProvider.GetDbScope();
 
-        List<MessageOrm> messages = await _messageRepository
-            .GetQueryable(scope)
-            .Where(x => x.ServerId == serverId)
+        List<MessageOrm> messages = await _messageService.GetQueryable(scope)
+            .Where(x => x.GuildId == context.Guild!.Id.ToString())
             .ToListAsync(ct);
 
         IEnumerable<ConversationEntry> dataset = creator.Create(messages);

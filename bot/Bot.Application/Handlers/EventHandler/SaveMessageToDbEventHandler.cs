@@ -1,6 +1,7 @@
 ﻿using Bot.Application.Shared;
 using Bot.Contracts;
 using Bot.Contracts.Handlers;
+using Bot.Contracts.Services;
 using Bot.Contracts.Shared;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
@@ -12,14 +13,14 @@ namespace Bot.Application.Handlers.EventHandler;
 
 internal class SaveMessageToDbEventHandler : IMessageCreatedEventHandler
 {
-    private readonly IMessageRepository _messageRepository;
+    private readonly IMessageService _messageService;
     private readonly ICreatedMessageCache _createdMessageCache;
 
     public SaveMessageToDbEventHandler(
-        IMessageRepository messageRepository, 
+        IMessageService messageService, 
         ICreatedMessageCache createdMessageCache)
     {
-        _messageRepository = messageRepository;
+        _messageService = messageService;
         _createdMessageCache = createdMessageCache;
     }
 
@@ -39,11 +40,11 @@ internal class SaveMessageToDbEventHandler : IMessageCreatedEventHandler
         }
 
         // Не сохранять ответы бота на команды.
-        MessageDto message = DiscordContentMapper.MapDiscordMessageToDto(args.Message);
+        Message message = DiscordContentMapper.MapDiscordMessageToMessage(args.Message);
 
         _createdMessageCache.Add(args.Guild.Id, args.Channel.Id, message);
 
-        await _messageRepository.Insert(DiscordContentMapper.MapDiscordMessage(args.Message), scope);
+        await _messageService.Add(message, scope, CancellationToken.None);
 
         await scope.CommitAsync();
     }

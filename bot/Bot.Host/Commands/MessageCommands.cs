@@ -42,7 +42,7 @@ internal class MessageCommands : DiscordCommandsGroupBase<MessageCommands>
     public async ValueTask ClearMessages(CommandContext context)
     {
         await ExecuteAsync(context,
-            () => _deleteServerMessagesUseCase.Execute(context, (long)context.Guild!.Id, CancellationToken.None));
+            () => _deleteServerMessagesUseCase.Execute(context, context.Guild!.Id, CancellationToken.None));
     }
 
     [Command("load")]

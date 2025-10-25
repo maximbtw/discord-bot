@@ -1,6 +1,7 @@
 ﻿using System.Threading.Channels;
 using Bot.Application.Shared;
-using Bot.Domain.Message;
+using Bot.Contracts.Services;
+using Bot.Contracts.Shared;
 using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.Commands;
@@ -12,35 +13,29 @@ namespace Bot.Application.UseCases.ServerMessages;
 public class LoadServerMessagesUseCase
 {
     private readonly DiscordClient _client;
-    private readonly IMessageRepository _messageRepository;
+    private readonly IMessageService _messageService;
     private readonly IDbScopeProvider _scopeProvider;
 
     public LoadServerMessagesUseCase(
-        IMessageRepository messageRepository,
+        IMessageService messageService,
         DiscordClient client,
         IDbScopeProvider scopeProvider)
     {
-        _messageRepository = messageRepository;
+        _messageService = messageService;
         _client = client;
         _scopeProvider = scopeProvider;
     }
 
     public async ValueTask Execute(CommandContext context, List<DiscordChannel>? channels = null, CancellationToken ct = default)
     {
-        DiscordGuild server = context.Guild!;
+        DiscordGuild guild = context.Guild!;
 
-        if (!_client.Guilds.TryGetValue(server.Id, out DiscordGuild? guild))
-        {
-            await context.RespondAsync("Ошибка: сервер не найден.");
-            return;
-        }
-
-        bool messagesExist = false;
+        bool messagesExist;
         await using (DbScope scope = _scopeProvider.GetDbScope())
         {
-            messagesExist = await _messageRepository
+            messagesExist = await _messageService
                 .GetQueryable(scope)
-                .AnyAsync(x => x.ServerId == (long)server.Id, ct);   
+                .AnyAsync(x => x.GuildId == guild.Id.ToString(), ct);   
         }
 
         if (messagesExist)
@@ -134,11 +129,11 @@ public class LoadServerMessagesUseCase
         CancellationToken ct)
     {
         const int maxMessageToBulkInsert = 500;
-        var buffer = new List<MessageOrm>(maxMessageToBulkInsert);
+        var buffer = new List<Message>(maxMessageToBulkInsert);
 
         await foreach (DiscordMessage discordMessage in dbSaverChannelReader.ReadAllAsync(ct))
         {
-            buffer.Add(DiscordContentMapper.MapDiscordMessage(discordMessage));
+            buffer.Add(DiscordContentMapper.MapDiscordMessageToMessage(discordMessage));
 
             if (buffer.Count >= maxMessageToBulkInsert)
             {
@@ -155,17 +150,8 @@ public class LoadServerMessagesUseCase
         {
             await using DbScope scope = _scopeProvider.GetDbScope();
 
-            if (_scopeProvider.DatabaseIsRelation())
-            {
-                await _messageRepository.BulkInsert(buffer, scope, ct);   
-            }
-            else
-            {
-                foreach (MessageOrm message in buffer)
-                {
-                    await _messageRepository.Insert(message, scope, ct);
-                }
-            }
+            await _messageService.Add(buffer, scope, ct);
+                
             await scope.CommitAsync(ct);
             await dispatcher.AddSavedMessages(buffer.Count);
 

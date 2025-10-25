@@ -15,11 +15,11 @@ internal class CreatedMessageCache : ICreatedMessageCache
         _cache = cache;
     }
 
-    public void Add(ulong serverId, ulong channelId, MessageDto message)
+    public void Add(ulong serverId, ulong channelId, Message message)
     {
         var key = new Key(serverId, channelId);
         
-        Queue<MessageDto> messages = _cache.GetOrCreate(key, _ => new Queue<MessageDto>())!;
+        Queue<Message> messages = _cache.GetOrCreate(key, _ => new Queue<Message>())!;
         
         messages.Enqueue(message);
         
@@ -29,13 +29,13 @@ internal class CreatedMessageCache : ICreatedMessageCache
         }
     }
     
-    public List<MessageDto> GetLastMessages(ulong serverId, ulong channelId)
+    public List<Message> GetLastMessages(ulong serverId, ulong channelId)
     {
         var key = new Key(serverId, channelId);
         
-        return _cache.TryGetValue(key, out Queue<MessageDto>? messages)
+        return _cache.TryGetValue(key, out Queue<Message>? messages)
             ? messages!.ToList()
-            : Enumerable.Empty<MessageDto>().ToList();
+            : Enumerable.Empty<Message>().ToList();
     }
 
     private readonly record struct Key(ulong ServerId, ulong ChannelId);

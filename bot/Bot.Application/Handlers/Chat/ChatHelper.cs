@@ -16,15 +16,15 @@ public static class ChatHelper
         int messageContentMaxLength,
         int maxMessages)
     {
-        List<MessageDto> cachedMessages = cache
+        List<Message> cachedMessages = cache
             .GetLastMessages(guildId, channelId)
-            .Where(x => x.Id != (long)newMessageId)
+            .Where(x => x.Id != newMessageId)
             .TakeLast(maxMessages)
             .ToList();
 
         cachedMessages.Reverse();
 
-        foreach (MessageDto cachedMessage in cachedMessages)
+        foreach (Message cachedMessage in cachedMessages)
         {
             if (cachedMessage.UserIsBot)
             {
@@ -38,7 +38,7 @@ public static class ChatHelper
                 
                 yield return new UserChatMessage(content)
                 {
-                    ParticipantName = cachedMessage.UserName
+                    ParticipantName = cachedMessage.UserNickname
                 };
             }
         }

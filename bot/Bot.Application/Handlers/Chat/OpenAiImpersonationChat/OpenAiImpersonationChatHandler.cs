@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Contracts;
 using Bot.Contracts.Handlers.AiChat;
+using Bot.Contracts.Services;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus;
@@ -15,7 +16,7 @@ namespace Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
 internal class OpenAiImpersonationChatHandler : IAiChatHandler
 {
     private readonly ICreatedMessageCache _messageCache;
-    private readonly IMessageRepository _messageRepository;
+    private readonly IMessageService _messageService;
     private readonly ChatClient _client;
     private readonly OpenAiImpersonationChatOptions _options;
     private readonly string _botName;
@@ -24,11 +25,11 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
         ICreatedMessageCache messageCache,
         IConfiguration configuration,
         ChatClient client, 
-        IMessageRepository messageRepository)
+        IMessageService messageService)
     {
         _messageCache = messageCache;
         _client = client;
-        _messageRepository = messageRepository;
+        _messageService = messageService;
         _options = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!.ChatOptions.ImpersonationChatOptions;
         _botName = configuration.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!.BotName;
     }
@@ -100,13 +101,13 @@ $"""
     {
         List<MessageOrm> impersonationMessages = new List<MessageOrm>();
 
-        IEnumerable<MessageOrm> messages = _messageRepository
+        IEnumerable<MessageOrm> messages = _messageService
             .GetQueryable(scope)
-            .Where(x => x.ServerId == (long)args.Guild.Id);
+            .Where(x => x.GuildId == args.Guild.Id.ToString());
         
         if (OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
         {
-            messages = messages.Where(x => (ulong)x.UserId == userId);
+            messages = messages.Where(x => x.UserId == userId.ToString());
         }
         
         int countToken = 0;
@@ -117,7 +118,7 @@ $"""
                 continue;
             }
 
-            countToken += userMessage.Content!.Length;
+            countToken += userMessage.Content.Length;
 
             impersonationMessages.Add(userMessage);
             

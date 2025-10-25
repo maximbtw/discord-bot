@@ -15,7 +15,7 @@ internal class MessageRepository : IMessageRepository
         await context.BulkInsertAsync(messages, cancellationToken: ct);
     }
 
-    public async Task Insert(MessageOrm message, DbScope scope, CancellationToken ct = default)
+    public async Task Insert(MessageOrm message, DbScope scope, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(message);
         
@@ -24,15 +24,13 @@ internal class MessageRepository : IMessageRepository
         await context.AddAsync(message, cancellationToken: ct);
     }
 
-    public async Task DeleteServerMessages(long serverId, DbScope scope, CancellationToken ct)
+    public IQueryable<MessageOrm> GetUpdateQueryable(DbScope scope)
     {
         DiscordDbContext context = scope.GetDbContext();
         
-        await context.Set<MessageOrm>()
-            .Where(m => m.ServerId == serverId)
-            .ExecuteDeleteAsync(ct);
-    }
-
+        return context.Set<MessageOrm>();
+    }        
+    
     public IQueryable<MessageOrm> GetQueryable(DbScope scope)
     {
         DiscordDbContext context = scope.GetDbContext();
