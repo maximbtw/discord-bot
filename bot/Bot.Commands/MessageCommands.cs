@@ -1,14 +1,11 @@
 ﻿using System.ComponentModel;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Bot.Application.Infrastructure.Checks.Access;
 using Bot.Application.UseCases.ServerMessages;
+using Bot.Commands.Checks.Role;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace Bot.Host.Commands;
+namespace Bot.Commands;
 
 [Command("message")]
 internal class MessageCommands : DiscordCommandsGroupBase<MessageCommands>
@@ -37,7 +34,7 @@ internal class MessageCommands : DiscordCommandsGroupBase<MessageCommands>
     }
 
     [Command("clear")]
-    [RoleCheck(Role.SuperUser)]
+    [RoleCheck(Role.Admin)]
     [Description("Deletes all server messages from the database.")]
     public async ValueTask ClearMessages(CommandContext context)
     {
@@ -46,7 +43,7 @@ internal class MessageCommands : DiscordCommandsGroupBase<MessageCommands>
     }
 
     [Command("load")]
-    [RoleCheck(Role.SuperUser)]
+    [RoleCheck(Role.Admin)]
     [Description("Loads all server messages and saves them to the database.")]
     public async ValueTask LoadMessages(CommandContext context, params DiscordChannel[] channels)
     {

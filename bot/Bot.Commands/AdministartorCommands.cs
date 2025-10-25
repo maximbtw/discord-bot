@@ -1,13 +1,11 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
-using Bot.Application.Infrastructure.Checks.Access;
+﻿using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
 using Bot.Application.UseCases.FineTunning;
+using Bot.Commands.Checks.Role;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace Bot.Host.Commands;
+namespace Bot.Commands;
 
 internal class AdministartorCommands : DiscordCommandsGroupBase<AdministartorCommands>
 {
@@ -27,28 +25,28 @@ internal class AdministartorCommands : DiscordCommandsGroupBase<AdministartorCom
     }
     
     [Command("create-dataset")]
-    [RoleCheck(Role.SuperUser)]
+    [RoleCheck(Role.Admin)]
     public async ValueTask CreateDataset(CommandContext context)
     {
         await ExecuteAsync(context, () => _createDatasetUseCase.Execute(context, CancellationToken.None));
     }
     
     [Command("remove-dataset")]
-    [RoleCheck(Role.SuperUser)]
+    [RoleCheck(Role.Admin)]
     public async ValueTask RemoveDataset(CommandContext context)
     {
         await ExecuteAsync(context, () => _deleteDatasetUseCase.Execute(context, CancellationToken.None));
     }
 
     [Command("train")]
-    [RoleCheck(Role.SuperUser)]
+    [RoleCheck(Role.Admin)]
     public async ValueTask TrainModel(CommandContext context)
     {
         await ExecuteAsync(context, () => _trainModelByDatasetUseCase.Execute(context, CancellationToken.None));
     }
     
     [Command("set-immersion-user")]
-    [RoleCheck(Role.SuperUser)]
+    [RoleCheck(Role.Admin)]
     public async ValueTask SetImmersionUser(CommandContext context, DiscordUser user)
     {
         OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex[context.Guild!.Id] = user.Id;

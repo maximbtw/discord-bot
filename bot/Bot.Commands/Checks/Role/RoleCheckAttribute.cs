@@ -1,9 +1,9 @@
 ﻿using DSharpPlus.Commands.ContextChecks;
 
-namespace Bot.Application.Infrastructure.Checks.Access;
+namespace Bot.Commands.Checks.Role;
 
-[AttributeUsage(AttributeTargets.Method)]
-public class RoleCheckAttribute : ContextCheckAttribute
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+internal class RoleCheckAttribute : ContextCheckAttribute
 {
     public Role[] Roles { get; }
 

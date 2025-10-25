@@ -10,6 +10,7 @@ COPY ["bot/Bot.Host/Bot.Host.csproj", "Bot.Host/"]
 COPY ["bot/Bot.Contracts/Bot.Contracts.csproj", "Bot.Contracts/"]
 COPY ["bot/Bot.Application/Bot.Application.csproj", "Bot.Application/"]
 COPY ["bot/Bot.Domain/Bot.Domain.csproj", "Bot.Domain/"]
+COPY ["bot/Bot.Commands/Bot.Commands.csproj", "Bot.Commands/"]
 
 RUN dotnet restore "Bot.Host/Bot.Host.csproj"
 
@@ -17,6 +18,7 @@ COPY ["bot/Bot.Host/", "Bot.Host/"]
 COPY ["bot/Bot.Contracts/", "Bot.Contracts/"]
 COPY ["bot/Bot.Application/", "Bot.Application/"]
 COPY ["bot/Bot.Domain/", "Bot.Domain/"]
+COPY ["bot/Bot.Commands/", "Bot.Commands/"]
 
 WORKDIR "/src/Bot.Host"
 RUN dotnet publish "Bot.Host.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false

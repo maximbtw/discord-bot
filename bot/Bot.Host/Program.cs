@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Bot.Application;
 using Bot.Application.Infrastructure.Configuration;
+using Bot.Commands;
 using Bot.Domain;
 using Bot.Host;
 using DSharpPlus;

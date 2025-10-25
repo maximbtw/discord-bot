@@ -1,9 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using DSharpPlus.Commands;
+﻿using DSharpPlus.Commands;
 using Microsoft.Extensions.Logging;
 
-namespace Bot.Host;
+namespace Bot.Commands;
 
 internal abstract class DiscordCommandsGroupBase;
 
