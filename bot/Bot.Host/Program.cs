@@ -5,6 +5,7 @@ using Bot.Commands;
 using Bot.Domain;
 using Bot.Host;
 using DSharpPlus;
+using DSharpPlus.Commands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

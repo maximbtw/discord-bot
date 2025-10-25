@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands;
 
+[Obsolete]
 internal class MiscCommands : DiscordCommandsGroupBase<MiscCommands>
 {
     private readonly GetJokeUseCase _getJokeUseCase; 

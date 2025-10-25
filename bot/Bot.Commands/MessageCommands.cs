@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands;
 
+[Obsolete]
 [Command("message")]
 internal class MessageCommands : DiscordCommandsGroupBase<MessageCommands>
 {

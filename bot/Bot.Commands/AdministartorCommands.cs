@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands;
 
+[Obsolete]
 internal class AdministartorCommands : DiscordCommandsGroupBase<AdministartorCommands>
 {
     private readonly CreateDatasetUseCase _createDatasetUseCase;

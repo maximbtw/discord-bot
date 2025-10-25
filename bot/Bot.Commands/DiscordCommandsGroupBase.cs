@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands;
 
+[Obsolete]
 internal abstract class DiscordCommandsGroupBase;
 
+[Obsolete]
 internal abstract class DiscordCommandsGroupBase<TGroup> : DiscordCommandsGroupBase
 {
     protected readonly ILogger<TGroup> Logger;
