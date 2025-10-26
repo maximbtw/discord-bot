@@ -31,7 +31,7 @@ builder.ConfigureServices(x =>
     
     x.RegisterDb(botConfiguration.DatabaseOptions);
     x.RegisterRepositories();
-    x.RegisterUseCases();
+    x.RegisterServices();
     x.RegisterAiChat(config);
 
     x.AddMemoryCache();

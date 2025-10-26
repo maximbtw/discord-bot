@@ -4,7 +4,6 @@ using Bot.Application.Handlers.EventHandler;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Services;
 using Bot.Application.Shared;
-using Bot.Application.UseCases.ServerMessages;
 using Bot.Contracts;
 using Bot.Contracts.Handlers;
 using Bot.Contracts.Handlers.AiChat;
@@ -18,12 +17,8 @@ namespace Bot.Application;
 
 public static class DependencyInjectionExtensions
 {
-    public static void RegisterUseCases(this IServiceCollection services)
+    public static void RegisterServices(this IServiceCollection services)
     {
-        // Messages
-        services.AddTransient<DeleteServerMessagesUseCase>();
-        services.AddTransient<LoadServerMessagesUseCase>();
-        
         // Handlers
         services.AddTransient<IMessageCreatedEventHandler, SendMessageToOpenAiEventHandler>();
         services.AddTransient<IMessageCreatedEventHandler, SaveMessageToDbEventHandler>();

@@ -5,7 +5,7 @@ using DSharpPlus.Entities;
 
 namespace Bot.Application.Shared;
 
-internal static partial class DiscordContentMapper
+public static partial class DiscordContentMapper
 {
     public static Message MapDiscordMessageToMessage(DiscordMessage message)
     {

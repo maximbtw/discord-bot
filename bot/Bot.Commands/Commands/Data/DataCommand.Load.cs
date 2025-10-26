@@ -1,62 +1,98 @@
-﻿using System.Threading.Channels;
+﻿using System.ComponentModel;
+using System.Threading.Channels;
 using Bot.Application.Shared;
-using Bot.Contracts.Services;
+using Bot.Commands.Checks.Role;
 using Bot.Contracts.Shared;
 using Bot.Domain.Scope;
-using DSharpPlus;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Bot.Application.UseCases.ServerMessages;
+namespace Bot.Commands.Commands.Data;
 
-public class LoadServerMessagesUseCase
+internal partial class DataCommand
 {
-    private readonly DiscordClient _client;
-    private readonly IMessageService _messageService;
-    private readonly IDbScopeProvider _scopeProvider;
-
-    public LoadServerMessagesUseCase(
-        IMessageService messageService,
-        DiscordClient client,
-        IDbScopeProvider scopeProvider)
+    private const int MaxParallelOfDegree = 8;
+    private const int MaxMessageToBulkInsert = 500;
+    
+    [Command("load")]
+    [RoleCheck(Role.Admin)]
+    [RequireGuild]
+    [Description("Загружает сообщения в базу знаний.")]
+    public async ValueTask ExecuteLoad(CommandContext context, params DiscordChannel[] channels)
     {
-        _messageService = messageService;
-        _client = client;
-        _scopeProvider = scopeProvider;
+        await LoadMessages(context, channels.ToList());
     }
 
-    public async ValueTask Execute(CommandContext context, List<DiscordChannel>? channels = null, CancellationToken ct = default)
+    [Command("loadall")]
+    [RoleCheck(Role.Admin)]
+    [RequireGuild]
+    [Description("Загружает сообщения в базу знаний.")]
+    public async ValueTask ExecuteLoad(CommandContext context)
     {
-        DiscordGuild guild = context.Guild!;
+        await LoadMessages(context);
+    }
 
-        bool messagesExist;
-        await using (DbScope scope = _scopeProvider.GetDbScope())
+    private async ValueTask LoadMessages(CommandContext context,List< DiscordChannel>? channels = null)
+    {
+        await context.DeferResponseAsync();
+
+        if (channels is null)
         {
-            messagesExist = await _messageService
-                .GetQueryable(scope)
-                .AnyAsync(x => x.GuildId == guild.Id.ToString(), ct);   
+            channels = context.Guild!.Channels.Values.ToList();
         }
 
-        if (messagesExist)
+        var hasChannelsToLoad = await HasChannelsToLoad(context, channels);
+        if (!hasChannelsToLoad)
         {
-            await context.RespondAsync(
-                "Сообщения сервера уже существуют, сначала удалите их командой `message-clear`.");
             return;
         }
 
-        await LoadMessagesAndSaveToDb(context, guild, channels, ct);
+        await LoadMessagesAndSaveToDb(context, channels);
     }
 
-    private async Task LoadMessagesAndSaveToDb(
-        CommandContext context,
-        DiscordGuild guild,
-        List<DiscordChannel>? channels = null,
-        CancellationToken ct = default)
+    private async Task<bool> HasChannelsToLoad(CommandContext context, List<DiscordChannel> channels)
     {
-        int channelsCount = channels?.Count ?? guild.Channels.Count(x => x.Value.Type == DiscordChannelType.Text);
-        
-        var dispatcher = await ProgressMessageDispatcher.Create(context, channelsCount);
+        HashSet<string> channelIds = channels.Select(x => x.Id.ToString()).ToHashSet();
+
+        await using DbScope scope = _scopeProvider.GetDbScope();
+
+        List<string> alreadyLoadedChannels = await _messageService
+            .GetQueryable(scope)
+            .Where(x => x.GuildId == context.Guild!.Id.ToString())
+            .Where(x => channelIds.Contains(x.ChannelId))
+            .Select(x => x.ChannelId)
+            .Distinct()
+            .ToListAsync();
+
+        if (alreadyLoadedChannels.Count == channels.Count)
+        {
+            await context.RespondAsync("Все сообщения уже есть в базе знаний.");
+            
+            return false;
+        }
+
+        if (alreadyLoadedChannels.Count > 0)
+        {
+            List<string> alreadyLoadedChannelNames = channels
+                .Where(x => alreadyLoadedChannels.Contains(x.Id.ToString()))
+                .Select(x => x.Name)
+                .ToList();
+
+            string names = string.Join(", ", alreadyLoadedChannelNames);
+
+            await context.RespondAsync($"Сообщения с этих каналов уже есть в базе знаний: {names}");
+
+            channels.RemoveAll(x => alreadyLoadedChannels.Contains(x.Id.ToString()));
+        }
+
+        return true;
+    }
+
+    private async Task LoadMessagesAndSaveToDb(CommandContext context, List<DiscordChannel> channels)
+    {
+        var dispatcher = await ProgressMessageDispatcher.Create(context, channels.Count);
 
         var dbSaverChannel = Channel.CreateUnbounded<DiscordMessage>(new UnboundedChannelOptions
         {
@@ -64,17 +100,19 @@ public class LoadServerMessagesUseCase
             SingleWriter = false
         });
 
-        Task saveToDbTask = SaveMessagesToDb(dbSaverChannel.Reader, dispatcher, ct);
+        Task saveToDbTask = SaveMessagesToDb(dbSaverChannel.Reader, dispatcher);
 
-        var semaphore = new SemaphoreSlim(8);
-        List<Task> tasks = (channels ?? guild.Channels.Values)
+        int maxParallelOfDegree = channels.Count > MaxParallelOfDegree ? MaxParallelOfDegree : channels.Count;
+
+        var semaphore = new SemaphoreSlim(maxParallelOfDegree);
+        List<Task> tasks = channels
             .Where(x => x.Type == DiscordChannelType.Text)
             .Select(async discordChannel =>
             {
                 try
                 {
-                    await semaphore.WaitAsync(ct);
-                    await LoadChannelMessagesAndSaveToDb(discordChannel, dbSaverChannel.Writer, ct);
+                    await semaphore.WaitAsync();
+                    await LoadChannelMessagesAndSaveToDb(context, discordChannel, dbSaverChannel.Writer);
                 }
                 finally
                 {
@@ -94,9 +132,9 @@ public class LoadServerMessagesUseCase
     }
 
     private async Task LoadChannelMessagesAndSaveToDb(
-        DiscordChannel channel,
-        ChannelWriter<DiscordMessage> dbSaverChannelWriter,
-        CancellationToken ct)
+        CommandContext context, 
+        DiscordChannel channel, 
+        ChannelWriter<DiscordMessage> dbSaverChannelWriter)
     {
         ulong? lastMessageId = null;
 
@@ -106,17 +144,17 @@ public class LoadServerMessagesUseCase
             anyLoaded = false;
 
             IAsyncEnumerable<DiscordMessage> messages = lastMessageId == null
-                ? channel.GetMessagesAsync(cancellationToken: ct)
-                : channel.GetMessagesBeforeAsync(before: (ulong)lastMessageId, cancellationToken: ct);
+                ? channel.GetMessagesAsync()
+                : channel.GetMessagesBeforeAsync(before: (ulong)lastMessageId);
 
-            await foreach (DiscordMessage message in messages.WithCancellation(ct))
+            await foreach (DiscordMessage message in messages)
             {
-                if (!DiscordMessageHelper.MessageIsValid(message, _client.CurrentUser.Id))
+                if (!DiscordMessageHelper.MessageIsValid(message, context.Client.CurrentUser.Id))
                 {
                     continue;
                 }
 
-                await dbSaverChannelWriter.WriteAsync(message, ct);
+                await dbSaverChannelWriter.WriteAsync(message);
                 anyLoaded = true;
                 lastMessageId = message.Id;
             }
@@ -125,17 +163,15 @@ public class LoadServerMessagesUseCase
 
     private async Task SaveMessagesToDb(
         ChannelReader<DiscordMessage> dbSaverChannelReader,
-        ProgressMessageDispatcher dispatcher,
-        CancellationToken ct)
+        ProgressMessageDispatcher dispatcher)
     {
-        const int maxMessageToBulkInsert = 500;
-        var buffer = new List<Message>(maxMessageToBulkInsert);
+        var buffer = new List<Message>(MaxMessageToBulkInsert);
 
-        await foreach (DiscordMessage discordMessage in dbSaverChannelReader.ReadAllAsync(ct))
+        await foreach (DiscordMessage discordMessage in dbSaverChannelReader.ReadAllAsync())
         {
             buffer.Add(DiscordContentMapper.MapDiscordMessageToMessage(discordMessage));
 
-            if (buffer.Count >= maxMessageToBulkInsert)
+            if (buffer.Count >= MaxMessageToBulkInsert)
             {
                 await SaveToDb();
             }
@@ -146,13 +182,15 @@ public class LoadServerMessagesUseCase
             await SaveToDb();
         }
 
+        return;
+
         async Task SaveToDb()
         {
             await using DbScope scope = _scopeProvider.GetDbScope();
 
-            await _messageService.Add(buffer, scope, ct);
-                
-            await scope.CommitAsync(ct);
+            await _messageService.Add(buffer, scope, CancellationToken.None);
+
+            await scope.CommitAsync();
             await dispatcher.AddSavedMessages(buffer.Count);
 
             buffer.Clear();
@@ -173,10 +211,11 @@ public class LoadServerMessagesUseCase
             _totalChannels = totalChannels;
         }
 
-        public static async Task<ProgressMessageDispatcher> Create(CommandContext context, int totalChannels)
+        public static async Task<ProgressMessageDispatcher> Create(CommandContext context,
+            int totalChannels)
         {
             var dispatcher = new ProgressMessageDispatcher(context, totalChannels);
-
+            
             await context.RespondAsync(new DiscordWebhookBuilder()
                 .WithContent(dispatcher.GetProgressString(done: false)));
 

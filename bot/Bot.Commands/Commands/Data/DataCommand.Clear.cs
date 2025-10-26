@@ -42,6 +42,13 @@ internal partial class DataCommand
 
         await scope.CommitAsync();
 
-        await context.RespondAsync($"✅ Все сообщения сервера **{context.Guild!.Name}** удалены.");
+        if (channelIds.Count == 0)
+        {
+            await context.RespondAsync($"✅ Все сообщения сервера **{context.Guild!.Name}** удалены.");
+        }
+        else
+        {
+            await context.RespondAsync($"✅ Сообщения удалены из {channelIds.Count} канал(ов) сервера **{context.Guild!.Name}**.");
+        }
     }
 }
