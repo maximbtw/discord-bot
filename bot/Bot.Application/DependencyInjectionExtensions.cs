@@ -1,13 +1,9 @@
 ﻿using System.ClientModel;
-using Bot.Application.Handlers;
 using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
-using Bot.Application.Handlers.Chat.OpenAiSimpleChat;
 using Bot.Application.Handlers.EventHandler;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Services;
 using Bot.Application.Shared;
-using Bot.Application.UseCases.FineTunning;
-using Bot.Application.UseCases.Misc;
 using Bot.Application.UseCases.ServerMessages;
 using Bot.Contracts;
 using Bot.Contracts.Handlers;
@@ -28,14 +24,6 @@ public static class DependencyInjectionExtensions
         services.AddTransient<DeleteServerMessagesUseCase>();
         services.AddTransient<GetServerMessagesStatsUseCase>();
         services.AddTransient<LoadServerMessagesUseCase>();
-        
-        // Ai
-        services.AddTransient<CreateDatasetUseCase>();
-        services.AddTransient<DeleteDatasetUseCase>();
-        services.AddTransient<TrainModelByDatasetUseCase>();
-        
-        // Misc
-        services.AddTransient<GetJokeUseCase>();
         
         // Handlers
         services.AddTransient<IMessageCreatedEventHandler, SendMessageToOpenAiEventHandler>();

@@ -1,22 +1,29 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.ComponentModel;
+using System.Text.RegularExpressions;
+using Bot.Commands.Checks.ExecuteInDm;
 using DSharpPlus.Commands;
 
-namespace Bot.Application.UseCases.Misc;
+namespace Bot.Commands.Commands;
 
-public partial class GetJokeUseCase
+internal partial class JokeCommand : ICommand
 {
     private const string NekdoUrl = "https://nekdo.ru/random/";
     
     private static readonly HttpClient HttpClient = new();
-
-    public async ValueTask Execute(CommandContext context, CancellationToken ct = default)
+    
+    [Command("joke")]
+    [Description("Случайная шутка")]
+    [ExecuteInDm]
+    public async ValueTask Execute(CommandContext context)
     {
-        string? joke = await FetchRandomJokeFromNekdo(ct);
+        await context.DeferResponseAsync();
         
-        await context.RespondAsync(joke ?? "Не удалось получить шутку. Попробуй ещё раз позже.");
+        string? joke = await FetchJoke(CancellationToken.None);
+        
+        await context.RespondAsync(joke ?? "Шутки закончились");
     }
 
-    private async Task<string?> FetchRandomJokeFromNekdo(CancellationToken ct)
+    private async Task<string?> FetchJoke(CancellationToken ct)
     {
         HttpResponseMessage response = await HttpClient.GetAsync(NekdoUrl, ct);
         if (!response.IsSuccessStatusCode)

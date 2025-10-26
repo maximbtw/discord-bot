@@ -105,7 +105,7 @@ $"""
             .GetQueryable(scope)
             .Where(x => x.GuildId == args.Guild.Id.ToString());
         
-        if (OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
+        if (_options.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
         {
             messages = messages.Where(x => x.UserId == userId.ToString());
         }
