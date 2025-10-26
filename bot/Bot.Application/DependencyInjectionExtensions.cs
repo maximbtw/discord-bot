@@ -3,8 +3,6 @@ using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
 using Bot.Application.Handlers.EventHandler;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Services;
-using Bot.Application.Shared;
-using Bot.Contracts;
 using Bot.Contracts.Handlers;
 using Bot.Contracts.Handlers.AiChat;
 using Bot.Contracts.Services;
@@ -22,8 +20,7 @@ public static class DependencyInjectionExtensions
         // Handlers
         services.AddTransient<IMessageCreatedEventHandler, SendMessageToOpenAiEventHandler>();
         services.AddTransient<IMessageCreatedEventHandler, SaveMessageToDbEventHandler>();
-
-        services.AddSingleton<ICreatedMessageCache, CreatedMessageCache>();
+        
         services.AddScoped<IMessageService, MessageService>();
     }
     

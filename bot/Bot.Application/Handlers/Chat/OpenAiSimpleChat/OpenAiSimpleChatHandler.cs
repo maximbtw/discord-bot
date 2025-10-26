@@ -2,6 +2,7 @@
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Contracts;
 using Bot.Contracts.Handlers.AiChat;
+using Bot.Contracts.Services;
 using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -12,16 +13,16 @@ namespace Bot.Application.Handlers.Chat.OpenAiSimpleChat;
 
 internal class OpenAiSimpleChatHandler : IAiChatHandler
 {
-    private readonly ICreatedMessageCache _messageCache;
+    private readonly IMessageService _messageService;
     private readonly ChatClient _client;
     private readonly OpenAiSimpleChatOptions _options;
 
     public OpenAiSimpleChatHandler(
-        ICreatedMessageCache messageCache,
+        IMessageService messageService,
         IConfiguration configuration,
         ChatClient client)
     {
-        _messageCache = messageCache;
+        _messageService = messageService;
         _client = client;
         _options = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!.ChatOptions.SimpleChatOptions;
     }
@@ -36,7 +37,7 @@ internal class OpenAiSimpleChatHandler : IAiChatHandler
         }
         
         IEnumerable<ChatMessage> historyMessages = ChatHelper.LoadHistoryMessagesFromCache(
-            _messageCache, 
+            _messageService, 
             args.Guild.Id, 
             args.Channel.Id, 
             args.Message.Id, 

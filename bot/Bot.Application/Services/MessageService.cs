@@ -3,16 +3,21 @@ using Bot.Contracts.Shared;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Bot.Application.Services;
 
 internal class MessageService : IMessageService
 {
+    private const int MaxMessagesInCache = 100;
+    
     private readonly IMessageRepository _repository;
+    private readonly IMemoryCache _memoryCache;
 
-    public MessageService(IMessageRepository repository)
+    public MessageService(IMessageRepository repository, IMemoryCache memoryCache)
     {
         _repository = repository;
+        _memoryCache = memoryCache;
     }
 
     public IQueryable<MessageOrm> GetQueryable(DbScope scope)
@@ -20,11 +25,16 @@ internal class MessageService : IMessageService
         return _repository.GetQueryable(scope);
     }
 
-    public async Task Add(Message message, DbScope scope, CancellationToken ct = default)
+    public async Task Add(Message message, DbScope scope, CancellationToken ct = default, bool saveToCache = false)
     {
         MessageOrm orm = MapToOrm(message);
 
         await _repository.Insert(orm, scope, ct);
+
+        if (saveToCache)
+        {
+            SaveToCache(message);
+        }
     }
 
     public async Task Add(List<Message> messages, DbScope scope, CancellationToken ct = default)
@@ -60,6 +70,29 @@ internal class MessageService : IMessageService
 
         await query.ExecuteDeleteAsync(ct);
     }
+    
+    public List<Message> GetMessagesFromCache(ulong guildId, ulong channelId)
+    {
+        var key = new CacheKey(guildId, channelId);
+        
+        return _memoryCache.TryGetValue(key, out Queue<Message>? messages)
+            ? messages!.ToList()
+            : Enumerable.Empty<Message>().ToList();
+    }
+    
+    private void SaveToCache(Message message)
+    {
+        var key = new CacheKey(message.GuildId, message.ChannelId);
+        
+        Queue<Message> messages = _memoryCache.GetOrCreate(key, _ => new Queue<Message>())!;
+        
+        messages.Enqueue(message);
+        
+        if (messages.Count > MaxMessagesInCache)
+        {
+            messages.Dequeue();   
+        }
+    }
 
     private MessageOrm MapToOrm(Message message) => new()
     {
@@ -87,5 +120,7 @@ internal class MessageService : IMessageService
         orm.Timestamp,
         orm.ReplyToMessageId == null ? null : ulong.Parse(orm.ReplyToMessageId),
         orm.HasAttachments,
-        orm.MentionedUserIds.ConvertAll(x => ulong.Parse(x)));
+        orm.MentionedUserIds.ConvertAll(ulong.Parse));
+    
+    private readonly record struct CacheKey(ulong GuildId, ulong ChannelId);
 }

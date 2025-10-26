@@ -1,5 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using Bot.Contracts;
+using Bot.Contracts.Services;
 using Bot.Contracts.Shared;
 using DSharpPlus.Entities;
 using OpenAI.Chat;
@@ -9,15 +9,14 @@ namespace Bot.Application.Handlers.Chat;
 public static class ChatHelper
 {
     public static IEnumerable<ChatMessage> LoadHistoryMessagesFromCache(
-        ICreatedMessageCache cache,
+        IMessageService messageService,
         ulong guildId,
         ulong channelId,
         ulong newMessageId,
         int messageContentMaxLength,
         int maxMessages)
     {
-        List<Message> cachedMessages = cache
-            .GetLastMessages(guildId, channelId)
+        List<Message> cachedMessages = messageService.GetMessagesFromCache(guildId, channelId)
             .Where(x => x.Id != newMessageId)
             .TakeLast(maxMessages)
             .ToList();
