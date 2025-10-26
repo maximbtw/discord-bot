@@ -1,8 +1,9 @@
 ﻿using System.Reflection;
-using Bot.Commands.Checks.ExecuteInDm;
 using Bot.Commands.Checks.Role;
 using DSharpPlus;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.EventArgs;
+using DSharpPlus.Commands.Exceptions;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 
@@ -38,13 +39,24 @@ public static class DependencyInjectionExtensions
             extension.AddProcessor(textCommandProcessor);
 
             extension.AddCheck<RoleCheck>();
-            extension.AddCheck<ExecuteInDmCheck>();
 
-            extension.CommandErrored += async (sender, args) =>
-            {
-                // TODO: Log ошибки
-                await args.Context.RespondAsync("У меня не получилось(");
-            };
+            extension.CommandErrored += HandleError;
         }, commandsConfiguration);
+    }
+
+    private static async Task HandleError(CommandsExtension sender, CommandErroredEventArgs args)
+    {
+        if (args.Exception is CommandNotFoundException)
+        {
+            await args.Context.RespondAsync("Такой команды нет");
+            return;
+        }
+        if (args.Exception is ChecksFailedException)
+        {
+            await args.Context.RespondAsync("У тебя нет прав!");
+            return;
+        }
+        
+        await args.Context.RespondAsync("У меня не получилось(");
     }
 }

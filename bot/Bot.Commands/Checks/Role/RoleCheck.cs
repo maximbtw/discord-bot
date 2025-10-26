@@ -49,6 +49,7 @@ internal class RoleCheck : IContextCheck<RoleCheckAttribute>
         return context.User.Username == _configuration.AdminUsername;
     }
     
+    // TODO: рекомендуют не делать запросы на апи в check, гужено использовать другой аттбриут RequiredPermission
     private bool IsAdministrator(CommandContext context)
     {
         DiscordMember member = context.Guild?.GetMemberAsync(context.User.Id).Result!;

@@ -22,7 +22,6 @@ public static class DependencyInjectionExtensions
     {
         // Messages
         services.AddTransient<DeleteServerMessagesUseCase>();
-        services.AddTransient<GetServerMessagesStatsUseCase>();
         services.AddTransient<LoadServerMessagesUseCase>();
         
         // Handlers

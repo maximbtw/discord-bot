@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel;
 using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
 using Bot.Application.Infrastructure.Configuration;
-using Bot.Commands.Checks.ExecuteInDm;
 using Bot.Commands.Checks.Role;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.Configuration;
 
@@ -23,7 +23,7 @@ internal class ChatSetUserCommand : ICommand
     
     [Command("as")]
     [Description("Настройки чата-имитации.")]
-    [ExecuteInDm]
+    [RequireGuild]
     [RoleCheck(Role.Admin, Role.Administrator)]
     public async ValueTask Execute(
         CommandContext context, 

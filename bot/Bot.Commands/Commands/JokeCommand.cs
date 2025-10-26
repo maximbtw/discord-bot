@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Text.RegularExpressions;
-using Bot.Commands.Checks.ExecuteInDm;
 using DSharpPlus.Commands;
 
 namespace Bot.Commands.Commands;
@@ -13,7 +12,6 @@ internal partial class JokeCommand : ICommand
     
     [Command("joke")]
     [Description("Случайная шутка")]
-    [ExecuteInDm]
     public async ValueTask Execute(CommandContext context)
     {
         await context.DeferResponseAsync();
