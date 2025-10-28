@@ -99,7 +99,7 @@ internal class OpenAiImpersonationChatStrategy : IChatStrategy
             .GetQueryable(scope)
             .Where(x => x.GuildId == args.Guild.Id.ToString());
 
-        if (chatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
+        if (OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
         {
             messages = messages.Where(x => x.UserId == userId.ToString());
         }

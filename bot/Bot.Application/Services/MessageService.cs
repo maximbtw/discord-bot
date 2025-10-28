@@ -78,7 +78,17 @@ internal class MessageService : IMessageService
             ? messages!.ToList()
             : Enumerable.Empty<Message>().ToList();
     }
-    
+
+    public void ClearCache(ulong guildId, List<ulong> channelIds)
+    {
+        foreach (ulong channelId in channelIds)
+        {
+            var key = new CacheKey(guildId, channelId);
+            
+            _memoryCache.Remove(key);
+        }
+    }
+
     private void SaveToCache(Message message)
     {
         var key = new CacheKey(message.GuildId, message.ChannelId);

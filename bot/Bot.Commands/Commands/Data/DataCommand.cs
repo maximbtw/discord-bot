@@ -17,5 +17,4 @@ internal partial class DataCommand : ICommand
         _scopeProvider = scopeProvider;
         _messageService = messageService;
     }
-    
 }

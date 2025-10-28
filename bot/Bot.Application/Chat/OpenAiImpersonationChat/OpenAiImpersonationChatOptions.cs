@@ -4,7 +4,7 @@ namespace Bot.Application.Chat.OpenAiImpersonationChat;
 
 public class OpenAiImpersonationChatOptions 
 {
-    public ConcurrentDictionary<ulong, ulong> GuildIdToImpersonationUserIdIndex { get; set; } = new();
+    public static ConcurrentDictionary<ulong, ulong> GuildIdToImpersonationUserIdIndex { get; set; } = new();
     
     public int MaxChatHistoryMessages { get; set; } = 20;
     

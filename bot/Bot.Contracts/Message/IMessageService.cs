@@ -14,4 +14,6 @@ public interface IMessageService
     Task DeleteGuildMessages(ulong guildId, List<ulong> channelIds, DbScope scope, CancellationToken ct);
 
     List<Message> GetMessagesFromCache(ulong guildId, ulong channelId);
+    
+    void ClearCache(ulong guildId, List<ulong> channelIds);
 }
