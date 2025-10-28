@@ -1,4 +1,4 @@
-﻿using Bot.Contracts.Services;
+﻿using Bot.Contracts.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 

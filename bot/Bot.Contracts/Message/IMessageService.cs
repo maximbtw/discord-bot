@@ -1,8 +1,7 @@
-﻿using Bot.Contracts.Shared;
-using Bot.Domain.Message;
+﻿using Bot.Domain.Message;
 using Bot.Domain.Scope;
 
-namespace Bot.Contracts.Services;
+namespace Bot.Contracts.Message;
 
 public interface IMessageService
 {

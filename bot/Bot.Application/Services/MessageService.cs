@@ -1,5 +1,4 @@
-﻿using Bot.Contracts.Services;
-using Bot.Contracts.Shared;
+﻿using Bot.Contracts.Message;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using Microsoft.EntityFrameworkCore;

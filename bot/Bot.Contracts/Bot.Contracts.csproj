@@ -16,8 +16,4 @@
       <ProjectReference Include="..\Bot.Domain\Bot.Domain.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Handlers\AiChat\" />
-    </ItemGroup>
-
 </Project>

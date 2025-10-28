@@ -1,6 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using Bot.Contracts.Services;
-using Bot.Contracts.Shared;
+using Bot.Contracts.Message;
 using DSharpPlus.Entities;
 using OpenAI.Chat;
 

@@ -12,9 +12,6 @@ public class BotConfiguration
     public string Prefix { get;  set; } = string.Empty;
     
     [Required]
-    public string BotName { get;  set; } = string.Empty;
-    
-    [Required]
     public string AdminUsername { get;  set; } = string.Empty;
     
     public DatabaseOptions DatabaseOptions { get; set; } = null!;

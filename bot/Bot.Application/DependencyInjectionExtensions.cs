@@ -4,7 +4,7 @@ using Bot.Application.Chat.OpenAiImpersonationChat;
 using Bot.Application.Chat.OpenAiSimpleChat;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Services;
-using Bot.Contracts.Services;
+using Bot.Contracts.Message;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI;

@@ -1,4 +1,4 @@
-﻿namespace Bot.Contracts.Shared;
+﻿namespace Bot.Contracts.Message;
 
 public record Message(
     ulong Id, 

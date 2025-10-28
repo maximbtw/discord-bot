@@ -5,7 +5,8 @@ namespace Bot.Application.Infrastructure.Configuration;
 
 public class OpenAiSettings
 {
-    [Required] public string ApiKey { get; set; } = string.Empty;
+    [Required] 
+    public string ApiKey { get; set; } = string.Empty;
 
     public bool UseOpenRouter { get; set; }
     

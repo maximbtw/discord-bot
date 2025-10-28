@@ -1,6 +1,6 @@
 ﻿using System.ClientModel;
 using System.Text.RegularExpressions;
-using Bot.Contracts.Services;
+using Bot.Contracts.Message;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
 using DSharpPlus;

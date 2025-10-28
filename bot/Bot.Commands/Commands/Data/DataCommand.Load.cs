@@ -2,7 +2,7 @@
 using System.Threading.Channels;
 using Bot.Application.Shared;
 using Bot.Commands.Checks.Role;
-using Bot.Contracts.Shared;
+using Bot.Contracts.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;

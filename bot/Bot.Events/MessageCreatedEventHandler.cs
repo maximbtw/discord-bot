@@ -1,8 +1,7 @@
 ﻿using Bot.Application.Chat;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Shared;
-using Bot.Contracts.Services;
-using Bot.Contracts.Shared;
+using Bot.Contracts.Message;
 using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.Entities;

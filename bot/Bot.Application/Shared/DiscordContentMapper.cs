@@ -1,5 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using Bot.Contracts.Shared;
+using Bot.Contracts.Message;
 using Bot.Domain.Message;
 using DSharpPlus.Entities;
 
