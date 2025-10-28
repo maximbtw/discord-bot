@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
-using Bot.Application.Handlers.Chat.OpenAiSimpleChat;
+using Bot.Application.Chat.OpenAiImpersonationChat;
+using Bot.Application.Chat.OpenAiSimpleChat;
 
-namespace Bot.Application.Infrastructure.Configuration;
+namespace Bot.Application.Chat;
 
-public class ChatOptions
+public class ChatSettings
 {
     public OpenAiSimpleChatOptions SimpleChatOptions { get; set; } = null!;
     
@@ -19,4 +19,6 @@ public class ChatOptions
     
     [Range(0, 100)]
     public int RandomMessageChance { get; set; } 
+    
+    public ChatType DefaultStrategy { get; set; }
 }

@@ -4,7 +4,7 @@ using Bot.Contracts.Shared;
 using DSharpPlus.Entities;
 using OpenAI.Chat;
 
-namespace Bot.Application.Handlers.Chat;
+namespace Bot.Application.Chat;
 
 public static class ChatHelper
 {

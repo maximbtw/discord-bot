@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
+namespace Bot.Application.Chat.OpenAiImpersonationChat;
 
-public class OpenAiImpersonationChatOptions
+public class OpenAiImpersonationChatOptions 
 {
     public ConcurrentDictionary<ulong, ulong> GuildIdToImpersonationUserIdIndex { get; set; } = new();
     
@@ -15,4 +15,6 @@ public class OpenAiImpersonationChatOptions
     public int MaxExampleMessagesTokenCount { get; set; }
     
     public bool ReplaceMentions { get; set; } = true;
+
+    public string BotName { get; set; } = string.Empty;
 }

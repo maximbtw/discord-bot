@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
-using Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
-using Bot.Application.Infrastructure.Configuration;
+using Bot.Application.Chat;
 using Bot.Commands.Checks.Role;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
@@ -12,13 +11,11 @@ namespace Bot.Commands.Commands.Chat;
 [Command("chat")]
 internal class ChatSetUserCommand : ICommand
 {
-    private readonly OpenAiImpersonationChatOptions _chatOptions;
+    private readonly ChatSettings _chatSettings;
     
     public ChatSetUserCommand(IConfiguration configuration)
     {
-        var settings = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!;
-
-        _chatOptions = settings.ChatOptions.ImpersonationChatOptions;
+        _chatSettings = configuration.GetSection(nameof(ChatSettings)).Get<ChatSettings>()!;
     }
     
     [Command("as")]
@@ -29,7 +26,7 @@ internal class ChatSetUserCommand : ICommand
         CommandContext context, 
         [Description("Пользователь для имитации.")] DiscordUser user)
     {
-        _chatOptions.GuildIdToImpersonationUserIdIndex[context.Guild!.Id] = user.Id;
+        _chatSettings.ImpersonationChatOptions.GuildIdToImpersonationUserIdIndex[context.Guild!.Id] = user.Id;
 
         await context.RespondAsync($"Теперь я говорю как {user.Username}!");
     }

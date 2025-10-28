@@ -3,6 +3,7 @@ using Bot.Application;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Commands;
 using Bot.Domain;
+using Bot.Events;
 using Bot.Host;
 using DSharpPlus;
 using DSharpPlus.Commands;

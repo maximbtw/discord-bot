@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Bot.Application\Bot.Application.csproj" />
     <ProjectReference Include="..\Bot.Commands\Bot.Commands.csproj" />
+    <ProjectReference Include="..\Bot.Events\Bot.Events.csproj" />
   </ItemGroup>
 
   <ItemGroup>

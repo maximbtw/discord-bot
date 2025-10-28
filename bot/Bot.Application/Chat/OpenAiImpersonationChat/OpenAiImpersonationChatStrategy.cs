@@ -1,7 +1,5 @@
 ﻿using System.ClientModel;
 using System.Text.RegularExpressions;
-using Bot.Application.Infrastructure.Configuration;
-using Bot.Contracts.Handlers.AiChat;
 using Bot.Contracts.Services;
 using Bot.Domain.Message;
 using Bot.Domain.Scope;
@@ -10,41 +8,37 @@ using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Configuration;
 using OpenAI.Chat;
 
-namespace Bot.Application.Handlers.Chat.OpenAiImpersonationChat;
+namespace Bot.Application.Chat.OpenAiImpersonationChat;
 
-internal class OpenAiImpersonationChatHandler : IAiChatHandler
+internal class OpenAiImpersonationChatStrategy : IChatStrategy
 {
     private readonly IMessageService _messageService;
     private readonly ChatClient _client;
-    private readonly OpenAiImpersonationChatOptions _options;
-    private readonly string _botName;
+    private readonly OpenAiImpersonationChatOptions _chatOptions;
 
-    public OpenAiImpersonationChatHandler(
-        IConfiguration configuration,
+    public ChatType Type => ChatType.ImpersonationChat;
+
+    public OpenAiImpersonationChatStrategy(
+        IConfiguration configuration, 
         ChatClient client,
         IMessageService messageService)
     {
         _client = client;
         _messageService = messageService;
-        _options = configuration.GetSection(nameof(OpenAiSettings)).Get<OpenAiSettings>()!.ChatOptions
-            .ImpersonationChatOptions;
-        _botName = configuration.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!.BotName;
+
+        _chatOptions = configuration.GetSection(nameof(ChatSettings)).Get<ChatSettings>()!.ImpersonationChatOptions;
     }
 
-    public async Task HandleMessage(
-        DiscordClient discordClient,
-        MessageCreatedEventArgs args,
-        DbScope scope,
-        CancellationToken ct)
+    public async Task Execute(DiscordClient client, MessageCreatedEventArgs args, DbScope scope, CancellationToken ct)
     {
         var inputMessages = new List<ChatMessage>();
 
-        List<MessageOrm> impersonationMessages = GetImpersonationMessages(args, scope);
+        List<MessageOrm> impersonationMessages = GetImpersonationMessages(args, _chatOptions, scope);
         List<string> serverEmojis = args.Guild.Emojis.Values.Select(e => e.ToString()).ToList();
 
         var systemMessage =
             $"""
-             - Твое имя "{_botName}". Не упоминай, что ты ИИ.
+             - Твое имя "{_chatOptions.BotName}". Не упоминай, что ты ИИ.
              - Ты должен отвечать в стиле пользователя из Discord. 
              - Старайся не упоминать людей в чате когда это не трубется (крайне редко пиши @Username)
              Вот примеры его сообщений:
@@ -61,8 +55,8 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
             args.Guild.Id,
             args.Channel.Id,
             args.Message.Id,
-            _options.MaxHistoryMessageInputTokenCount,
-            _options.MaxChatHistoryMessages);
+            _chatOptions.MaxHistoryMessageInputTokenCount,
+            _chatOptions.MaxChatHistoryMessages);
 
         inputMessages.AddRange(historyMessages);
 
@@ -75,7 +69,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
         var options = new ChatCompletionOptions
         {
-            MaxOutputTokenCount = _options.MaxOutputTokenCount,
+            MaxOutputTokenCount = _chatOptions.MaxOutputTokenCount,
             Temperature = 0.7f,
             TopP = 0.9f,
             FrequencyPenalty = 0.2f,
@@ -86,7 +80,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
         string responseText = result.Value.Content[0].Text;
 
-        if (_options.ReplaceMentions)
+        if (_chatOptions.ReplaceMentions)
         {
             responseText = await ChatHelper.ReplaceUserMentions(responseText, args.Guild, ct);
         }
@@ -94,7 +88,10 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
         await args.Message.RespondAsync(responseText);
     }
 
-    private List<MessageOrm> GetImpersonationMessages(MessageCreatedEventArgs args, DbScope scope)
+    private List<MessageOrm> GetImpersonationMessages(
+        MessageCreatedEventArgs args,
+        OpenAiImpersonationChatOptions chatOptions, 
+        DbScope scope)
     {
         List<MessageOrm> impersonationMessages = new List<MessageOrm>();
 
@@ -102,7 +99,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
             .GetQueryable(scope)
             .Where(x => x.GuildId == args.Guild.Id.ToString());
 
-        if (_options.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
+        if (chatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
         {
             messages = messages.Where(x => x.UserId == userId.ToString());
         }
@@ -119,7 +116,7 @@ internal class OpenAiImpersonationChatHandler : IAiChatHandler
 
             impersonationMessages.Add(userMessage);
 
-            if (countToken > _options.MaxExampleMessagesTokenCount)
+            if (countToken > chatOptions.MaxExampleMessagesTokenCount)
             {
                 break;
             }

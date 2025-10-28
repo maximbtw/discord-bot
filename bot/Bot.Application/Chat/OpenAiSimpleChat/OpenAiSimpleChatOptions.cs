@@ -1,6 +1,6 @@
-﻿namespace Bot.Application.Handlers.Chat.OpenAiSimpleChat;
+﻿namespace Bot.Application.Chat.OpenAiSimpleChat;
 
-public class OpenAiSimpleChatOptions
+public class OpenAiSimpleChatOptions 
 {
     public string? SystemMessage { get; set; } = null!;
 
