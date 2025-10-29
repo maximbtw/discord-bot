@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using Bot.Application.Chat.OpenAiImpersonationChat;
-using Bot.Commands.Checks.Role;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
@@ -12,7 +11,7 @@ internal partial class ChatCommand
     [Command("reset")]
     [Description("Чистит кэш переписки. Восстанавливает стандартные настройки чата.")]
     [RequireGuild]
-    [RoleCheck(Role.Admin, Role.Administrator)]
+    [RequirePermissions([],[DiscordPermission.Administrator])]
     public async ValueTask ExecuteReset(
         CommandContext context, 
         [Description("Канал для которого стоит отчистить кэш.")] DiscordChannel? channel = null)

@@ -1,5 +1,4 @@
 ﻿using DSharpPlus.Commands;
-using DSharpPlus.Commands.ContextChecks;
 
 namespace Bot.Commands.Commands;
 

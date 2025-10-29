@@ -97,7 +97,8 @@ internal class OpenAiImpersonationChatStrategy : IChatStrategy
 
         IEnumerable<MessageOrm> messages = _messageService
             .GetQueryable(scope)
-            .Where(x => x.GuildId == args.Guild.Id.ToString());
+            .Where(x => x.GuildId == args.Guild.Id.ToString())
+            .OrderByDescending(x => x.Timestamp);
 
         if (OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex.TryGetValue(args.Guild.Id, out ulong userId))
         {

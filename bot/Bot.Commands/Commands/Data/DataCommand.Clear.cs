@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using Bot.Commands.Checks.Role;
+using Bot.Commands.Checks.RequireApplicationOwner;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
@@ -10,7 +10,7 @@ namespace Bot.Commands.Commands.Data;
 internal partial class DataCommand
 {
     [Command("clear")]
-    [RoleCheck(Role.Admin)]
+    [MyRequireApplicationOwner]
     [RequireGuild]
     [Description("Удаляет сообщения из базы знаний в указанных каналах.")]
     public async ValueTask ExecuteClear(
@@ -22,7 +22,7 @@ internal partial class DataCommand
     
     // Дискорд не позволяет делать опциональные массивы, поэтому сделана отдельная команда.
     [Command("clearall")]
-    [RoleCheck(Role.Admin)]
+    [MyRequireApplicationOwner]
     [RequireGuild]
     [Description("Удаляет все сообщения сервера из базы знаний.")]
     public async ValueTask ExecuteClear(CommandContext context)

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Threading.Channels;
 using Bot.Application.Shared;
-using Bot.Commands.Checks.Role;
+using Bot.Commands.Checks.RequireApplicationOwner;
 using Bot.Contracts.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
@@ -17,7 +17,7 @@ internal partial class DataCommand
     private const int MaxMessageToBulkInsert = 500;
     
     [Command("load")]
-    [RoleCheck(Role.Admin)]
+    [MyRequireApplicationOwner]
     [RequireGuild]
     [Description("Загружает сообщения в базу знаний.")]
     public async ValueTask ExecuteLoad(CommandContext context, params DiscordChannel[] channels)
@@ -26,7 +26,7 @@ internal partial class DataCommand
     }
 
     [Command("loadall")]
-    [RoleCheck(Role.Admin)]
+    [MyRequireApplicationOwner]
     [RequireGuild]
     [Description("Загружает сообщения в базу знаний.")]
     public async ValueTask ExecuteLoad(CommandContext context)
