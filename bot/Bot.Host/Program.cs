@@ -1,9 +1,12 @@
 ﻿using System.Threading.Tasks;
 using Bot.Application;
 using Bot.Application.Infrastructure.Configuration;
+using Bot.Commands;
 using Bot.Domain;
+using Bot.Events;
 using Bot.Host;
 using DSharpPlus;
+using DSharpPlus.Commands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,7 +32,7 @@ builder.ConfigureServices(x =>
     
     x.RegisterDb(botConfiguration.DatabaseOptions);
     x.RegisterRepositories();
-    x.RegisterUseCases();
+    x.RegisterServices();
     x.RegisterAiChat(config);
 
     x.AddMemoryCache();

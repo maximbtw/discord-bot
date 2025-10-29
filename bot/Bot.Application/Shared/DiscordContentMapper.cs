@@ -1,46 +1,28 @@
 ﻿using System.Text.RegularExpressions;
-using Bot.Contracts.Shared;
+using Bot.Contracts.Message;
 using Bot.Domain.Message;
 using DSharpPlus.Entities;
 
 namespace Bot.Application.Shared;
 
-internal static partial class DiscordContentMapper
+public static partial class DiscordContentMapper
 {
-    public static MessageDto MapDiscordMessageToDto(DiscordMessage message)
+    public static Message MapDiscordMessageToMessage(DiscordMessage message)
     {
-        return new MessageDto
+        return new Message
         (
-            Id: (long)message.Id,
-            UserId: (long)message.Author!.Id,
-            UserName: message.Author.Username,
-            ChannelId: (long)message.Channel!.Id,
-            ServerId: (long)message.Channel.GuildId!,
+            Id: message.Id,
+            UserId: message.Author!.Id,
+            UserNickname: message.Author.Username,
+            ChannelId: message.Channel!.Id,
+            GuildId: (ulong)message.Channel.GuildId!,
             Content: MapContent(message),
             Timestamp: message.Timestamp.UtcDateTime,
             UserIsBot: message.Author.IsBot,
-            ReplyToMessageId: (long?)message.ReferencedMessage?.Id,
+            ReplyToMessageId: message.ReferencedMessage?.Id,
             HasAttachments: message.Attachments.Count > 0,
-            MentionedUserIds: message.MentionedUsers.Select(u => (long)u.Id).ToList()
+            MentionedUserIds: message.MentionedUsers.Select(u => u.Id).ToList()
         );
-    }
-
-    public static MessageOrm MapDiscordMessage(DiscordMessage message)
-    {
-        return new MessageOrm
-        {
-            Id = (long)message.Id,
-            UserId = (long)message.Author!.Id,
-            UserName = message.Author.Username,
-            ChannelId =(long) message.Channel!.Id,
-            ServerId = (long)message.Channel.GuildId!,
-            Content = MapContent(message),
-            Timestamp = message.Timestamp.UtcDateTime,
-            UserIsBot = message.Author.IsBot,
-            ReplyToMessageId = (long?)message.ReferencedMessage?.Id,
-            HasAttachments = message.Attachments.Count > 0,
-            MentionedUserIds = message.MentionedUsers.Select(u => (long)u.Id).ToList()
-        };
     }
 
     public static string MapContent(DiscordMessage message)
