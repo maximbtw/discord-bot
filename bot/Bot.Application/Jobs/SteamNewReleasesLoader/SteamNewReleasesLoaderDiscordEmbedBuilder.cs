@@ -5,83 +5,74 @@ namespace Bot.Application.Jobs.SteamNewReleasesLoader;
 
 public static class SteamNewReleasesLoaderDiscordEmbedBuilder
 {
-    public static DiscordEmbed Build(SteamAppDetails appDetails)
+    public static DiscordEmbed Build(string appId, SteamAppDetails appDetails)
     {
-        string priceText = appDetails.IsFree
-            ? "🆓 Бесплатно"
-            : appDetails.PriceOverview is not null
-                ? (int.TryParse(appDetails.PriceOverview.DiscountPercent, out int discount) && discount > 0
-                    ? $"💸 ~~{appDetails.PriceOverview.InitialFormatted}~~ → **{appDetails.PriceOverview.FinalFormatted}** (-{discount}%)"
-                    : $"💰 {appDetails.PriceOverview.FinalFormatted}")
-                : "💰 Не указана";
-
-        string genres = appDetails.Genres.Count > 0
-            ? string.Join(", ", appDetails.Genres.Select(g => g.Description))
-            : "Не указаны";
-
-        string categories = appDetails.Categories.Count > 0
-            ? string.Join(", ", appDetails.Categories.Select(c => c.Description))
-            : "Не указаны";
-
-        string releaseInfo = appDetails.ReleaseDate is { ComingSoon: true }
-            ? $"📅 **Скоро выходит!** ({appDetails.ReleaseDate.Date})"
-            : $"📅 Дата выхода: **{appDetails.ReleaseDate?.Date ?? "неизвестна"}**";
-
-        string screenshotsSection = "";
-        if (appDetails.Screenshots is { Count: > 0 })
-        {
-            // Покажем максимум 3 скриншота, в виде ссылок
-            List<string> screenshots = appDetails.Screenshots
-                .Take(3)
-                .Select(s => $"[Скриншот]({s.FullPath})")
-                .ToList();
-            
-            screenshotsSection = string.Join(" • ", screenshots);
-        }
-
         var embed = new DiscordEmbedBuilder
         {
             Title = appDetails.Name,
-            Url = $"https://store.steampowered.com/app/{GetAppIdFromImage(appDetails.HeaderImage)}/",
-            Description = $"{appDetails.ShortDescription.Truncate(300)}\n\n{releaseInfo}",
+            Url = $"https://store.steampowered.com/app/{appId}/",
+            Description = appDetails.ShortDescription,
             Color = DiscordColor.Blurple,
-            Thumbnail = new DiscordEmbedBuilder.EmbedThumbnail
-            {
-                Url = appDetails.HeaderImage
-            },
-            ImageUrl = appDetails.Screenshots?.FirstOrDefault()?.FullPath ?? appDetails.HeaderImage,
+            ImageUrl = appDetails.HeaderImage,
             Footer = new DiscordEmbedBuilder.EmbedFooter
             {
                 Text = "Steam • Новые релизы"
             }
         };
 
-        embed.AddField("🎮 Жанры", genres, inline: true);
-        embed.AddField("⚙️ Категории", categories, inline: true);
-        embed.AddField("💵 Цена", priceText, inline: true);
-
-        if (!string.IsNullOrEmpty(screenshotsSection))
-        {
-            embed.AddField("📸 Скриншоты", screenshotsSection, inline: false);
-        }
+        AddReleaseDateText(embed, appDetails);
+        AddGenresText(embed, appDetails);
+        AddCategoriesText(embed, appDetails);
+        AddPriceText(embed, appDetails);
 
         return embed.Build();
     }
 
-    private static string GetAppIdFromImage(string headerImageUrl)
+    private static void AddReleaseDateText(DiscordEmbedBuilder embed, SteamAppDetails appDetails)
     {
-        var parts = headerImageUrl.Split('/');
-        int index = Array.IndexOf(parts, "apps");
-        return (index >= 0 && index + 1 < parts.Length) ? parts[index + 1] : "0";
+        string releaseInfo = appDetails.ReleaseDate is { ComingSoon: true }
+            ? $"**Скоро выходит!** ({appDetails.ReleaseDate.Date})"
+            : $"**{appDetails.ReleaseDate?.Date ?? "неизвестна"}**";
+        
+        embed.AddField( "📅 Дата выхода", releaseInfo, inline: false);
     }
 
-    private static string Truncate(this string text, int maxLength)
+    private static void AddGenresText(DiscordEmbedBuilder embed, SteamAppDetails appDetails)
     {
-        if (string.IsNullOrEmpty(text))
-        {
-            return text;
-        }
+        string genres = string.Join(", ", appDetails.Genres.Select(g => $"{g.Description}"));
+        
+        embed.AddField("🎮 Жанры", genres, inline: false);
+    }
+    
+    private static void AddCategoriesText(DiscordEmbedBuilder embed, SteamAppDetails appDetails)
+    {
+        string categories = string.Join(", ", appDetails.Categories.Select(c => $"{c.Description}"));
+        
+        embed.AddField("⚙️ Категории", categories, inline: false);
+    }
 
-        return text.Length <= maxLength ? text : text[..(maxLength - 3)] + "...";
+    private static void AddPriceText(DiscordEmbedBuilder embed, SteamAppDetails appDetails)
+    {
+        string priceText = GetPriceText();
+
+        embed.AddField("💵 Цена", priceText, inline: false);
+        return;
+
+        string GetPriceText()
+        {
+            if (appDetails.IsFree)
+            {
+                return "Бесплатно";
+            }
+
+            if (appDetails.PriceOverview is null)
+            {
+                return "Не указана";
+            }
+
+            return appDetails.PriceOverview.DiscountPercent > 0
+                ? $"~~{appDetails.PriceOverview.InitialFormatted}~~ → **{appDetails.PriceOverview.FinalFormatted}** (-{appDetails.PriceOverview.DiscountPercent}%)"
+                : $"{appDetails.PriceOverview.FinalFormatted}";
+        }
     }
 }
