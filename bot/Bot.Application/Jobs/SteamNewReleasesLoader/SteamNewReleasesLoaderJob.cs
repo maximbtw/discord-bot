@@ -20,22 +20,7 @@ internal class SteamNewReleasesLoaderJob : IJob
     private readonly SteamNewReleasesLoaderSettings _settings;
     private readonly IDbScopeProvider _dbScopeProvider;
     private readonly ILogger<SteamNewReleasesLoaderJob> _logger;
-    
-    private static readonly FrozenSet<string> MultiplayerCategories = new[]
-    {
-        "Multi-player",
-        "Online PvP",
-        "LAN PvP",
-        "Shared/Split Screen PvP",
-        "Online Co-op",
-        "Shared/Split Screen Co-op",
-        "Co-op",
-        "Cross-Platform Multiplayer",
-        "MMO",
-        "PvP",
-        "Local Multiplayer",
-        "Online Multiplayer"
-    }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+    private readonly FrozenSet<string> _loadCategories;
 
     public SteamNewReleasesLoaderJob(
         ISteamNewReleasesService service, 
@@ -49,6 +34,8 @@ internal class SteamNewReleasesLoaderJob : IJob
         _dbScopeProvider = dbScopeProvider;
         _logger = logger;
         _settings =  configuration.GetSection(nameof(SteamNewReleasesLoaderSettings)).Get<SteamNewReleasesLoaderSettings>()!;
+        
+        _loadCategories = _settings.LoadCategories.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task Execute(IJobExecutionContext context)
@@ -157,11 +144,13 @@ internal class SteamNewReleasesLoaderJob : IJob
             return false;
         }
 
-        // TODO: В будущем можно будет добавить настроку категорий через бота.
-        bool isMultiplayer = data.Categories.Any(x => MultiplayerCategories.Contains(x.Description));
-        if (!isMultiplayer)
+        if (_loadCategories.Any())
         {
-            return false;
+            bool categoryMatched = data.Categories.Any(x => _loadCategories.Contains(x.Description));
+            if (!categoryMatched)
+            {
+                return false;
+            }
         }
 
         return true;

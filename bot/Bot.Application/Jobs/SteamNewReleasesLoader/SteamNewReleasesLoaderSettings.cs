@@ -11,6 +11,8 @@ public class SteamNewReleasesLoaderSettings
     
     [Required]
     public int ReleaseCount { get; set; }
+
+    public List<string> LoadCategories { get; set; } = new();
     
     public string? CountryCurrencyCode { get; set; }
     
