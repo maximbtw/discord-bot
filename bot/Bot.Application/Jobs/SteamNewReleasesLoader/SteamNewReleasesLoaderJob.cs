@@ -205,8 +205,7 @@ internal class SteamNewReleasesLoaderJob : IJob
         try
         {
             var inputMessages = new List<ChatMessage>();
-
-            // Системное сообщение — задает стиль и правила
+            
             inputMessages.Add(new SystemChatMessage(
                 """
                 Ты — игровой Discord-бот с чувством юмора и лёгким сарказмом. 
@@ -217,8 +216,7 @@ internal class SteamNewReleasesLoaderJob : IJob
                 Не повторяйся слишком часто, удивляй участников новым тоном.
                 """
             ));
-
-            // Сообщение пользователя — описание игры
+            
             string description = $"{appDetails.Name}: {appDetails.ShortDescription}\n" +
                                  $"Жанры: {string.Join(", ", appDetails.Genres.Select(g => g.Description))}\n" +
                                  $"Категории: {string.Join(", ", appDetails.Categories.Select(c => c.Description))}\n";

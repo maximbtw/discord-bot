@@ -40,7 +40,6 @@ internal class SteamNewReleasesService : ISteamNewReleasesService
             yield break;
         }
 
-
         string html = resultsHtml.GetString()!;
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
