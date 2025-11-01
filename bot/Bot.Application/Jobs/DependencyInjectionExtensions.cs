@@ -1,9 +1,9 @@
 ﻿using Bot.Application.Jobs.SteamNewReleasesLoader;
 using Bot.Application.Jobs.SteamNewReleasesLoader.Service;
+using DSharpPlus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
-using Quartz.Impl;
 
 namespace Bot.Application.Jobs;
 
@@ -26,7 +26,12 @@ public static class DependencyInjectionExtensions
                 );
             }
         });
-        
-        services.AddQuartzHostedService();
+    }
+
+    public static async Task StartJobs(this DiscordClient client)
+    {
+        var schedulerFactory = client.ServiceProvider.GetRequiredService<ISchedulerFactory>();
+        IScheduler scheduler = await schedulerFactory.GetScheduler();
+        await scheduler.Start();
     }
 }

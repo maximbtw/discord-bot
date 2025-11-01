@@ -11,4 +11,8 @@ public class SteamNewReleasesLoaderSettings
     
     [Required]
     public int ReleaseCount { get; set; }
+    
+    public string? CountryCurrencyCode { get; set; }
+    
+    public string? Language { get; set; }
 }

@@ -47,7 +47,7 @@ public class SteamAppDetails
 public class SteamAppPriceOverview
 {
     [JsonPropertyName("discount_percent")]
-    public string DiscountPercent { get; set; }  = string.Empty;
+    public int DiscountPercent { get; set; }
     
     [JsonPropertyName("initial_formatted")]
     public string InitialFormatted { get; set; }  = string.Empty;

@@ -75,7 +75,9 @@ internal class SteamNewReleasesLoaderJob : IJob
         string? lasAppId = null;
         await foreach (string appId in _service.GetLastAppIds(_settings.ReleaseCount))
         {
-            SteamAppDetailsResponse? appDetailsResponse = await _service.GetAppDetails(appId);
+            SteamAppDetailsResponse? appDetailsResponse =
+                await _service.GetAppDetails(appId, _settings.CountryCurrencyCode, _settings.Language);
+            
             if (appDetailsResponse is null || !appDetailsResponse.Success)
             {
                 // TODO: Log
@@ -142,7 +144,7 @@ internal class SteamNewReleasesLoaderJob : IJob
             ulong guildId = ulong.Parse(guildSettings.GuildId);
             ulong channelId = ulong.Parse(guildSettings.ChannelId);
 
-            await SendMessageToDiscordChannel(guildId, channelId, data);
+            await SendMessageToDiscordChannel(guildId, channelId, appId, data);
         }
 
         return anySent;
@@ -165,13 +167,13 @@ internal class SteamNewReleasesLoaderJob : IJob
         return true;
     }
 
-    private async Task SendMessageToDiscordChannel(ulong guildId, ulong channelId, SteamAppDetails data)
+    private async Task SendMessageToDiscordChannel(ulong guildId, ulong channelId, string appId,  SteamAppDetails data)
     {
         // TODO: Если канал или сервер удалили?
         DiscordGuild guild = await _discordClient.GetGuildAsync(guildId);
         DiscordChannel channel = await guild.GetChannelAsync(channelId);
 
-        DiscordEmbed embed = SteamNewReleasesLoaderDiscordEmbedBuilder.Build(data);
+        DiscordEmbed embed = SteamNewReleasesLoaderDiscordEmbedBuilder.Build(appId, data);
         
         await channel.SendMessageAsync(embed);
     }

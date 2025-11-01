@@ -46,4 +46,6 @@ builder.RegisterEvents();
 DiscordClient client = builder.Build();
 
 await client.ConnectAsync();
+await client.StartJobs();
+
 await Task.Delay(-1);
