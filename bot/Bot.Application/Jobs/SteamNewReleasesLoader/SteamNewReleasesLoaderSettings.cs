@@ -17,4 +17,6 @@ public class SteamNewReleasesLoaderSettings
     public string? CountryCurrencyCode { get; set; }
     
     public string? Language { get; set; }
+    
+    public bool EnableAccompanyingAiMessage { get; set; }
 }

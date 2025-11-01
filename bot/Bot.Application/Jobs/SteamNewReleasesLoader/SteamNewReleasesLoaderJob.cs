@@ -1,4 +1,5 @@
-﻿using System.Collections.Frozen;
+﻿using System.ClientModel;
+using System.Collections.Frozen;
 using Bot.Application.Jobs.SteamNewReleasesLoader.Contracts;
 using Bot.Application.Jobs.SteamNewReleasesLoader.Service;
 using Bot.Domain.Orms.SteamNewReleasesSettings;
@@ -8,6 +9,7 @@ using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenAI.Chat;
 using Quartz;
 
 namespace Bot.Application.Jobs.SteamNewReleasesLoader;
@@ -19,6 +21,7 @@ internal class SteamNewReleasesLoaderJob : IJob
     private readonly DiscordClient _discordClient ;
     private readonly SteamNewReleasesLoaderSettings _settings;
     private readonly IDbScopeProvider _dbScopeProvider;
+    private readonly ChatClient _client;
     private readonly ILogger<SteamNewReleasesLoaderJob> _logger;
     private readonly FrozenSet<string> _loadCategories;
 
@@ -27,12 +30,14 @@ internal class SteamNewReleasesLoaderJob : IJob
         DiscordClient discordClient,
         IConfiguration configuration, 
         IDbScopeProvider dbScopeProvider, 
-        ILogger<SteamNewReleasesLoaderJob> logger)
+        ILogger<SteamNewReleasesLoaderJob> logger, 
+        ChatClient client)
     {
         _service = service; 
         _discordClient = discordClient;
         _dbScopeProvider = dbScopeProvider;
         _logger = logger;
+        _client = client;
         _settings =  configuration.GetSection(nameof(SteamNewReleasesLoaderSettings)).Get<SteamNewReleasesLoaderSettings>()!;
         
         _loadCategories = _settings.LoadCategories.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
@@ -67,7 +72,7 @@ internal class SteamNewReleasesLoaderJob : IJob
             
             if (appDetailsResponse is null || !appDetailsResponse.Success)
             {
-                // TODO: Log
+                _logger.LogWarning("Failed to fetch details for appId {AppId}", appId);
 
                 continue;
             }
@@ -108,6 +113,8 @@ internal class SteamNewReleasesLoaderJob : IJob
         SteamAppDetails data,
         HashSet<string> skipGuildIds)
     {
+        string? accompanyingAiMessage = null;
+        
         bool anySent = false;
         foreach (SteamNewReleasesSettingsOrm guildSettings in settings)
         {
@@ -128,10 +135,15 @@ internal class SteamNewReleasesLoaderJob : IJob
             
             anySent = true;
 
+            if (_settings.EnableAccompanyingAiMessage && string.IsNullOrEmpty(accompanyingAiMessage))
+            {
+                accompanyingAiMessage = await GetAiMessage(data);
+            }
+
             ulong guildId = ulong.Parse(guildSettings.GuildId);
             ulong channelId = ulong.Parse(guildSettings.ChannelId);
 
-            await SendMessageToDiscordChannel(guildId, channelId, appId, data);
+            await SendMessageToDiscordChannel(guildId, channelId, appId, data, accompanyingAiMessage);
         }
 
         return anySent;
@@ -156,14 +168,70 @@ internal class SteamNewReleasesLoaderJob : IJob
         return true;
     }
 
-    private async Task SendMessageToDiscordChannel(ulong guildId, ulong channelId, string appId,  SteamAppDetails data)
+    private async Task SendMessageToDiscordChannel(
+        ulong guildId, 
+        ulong channelId, 
+        string appId, 
+        SteamAppDetails data, 
+        string? messageContent = null)
     {
         // TODO: Если канал или сервер удалили?
         DiscordGuild guild = await _discordClient.GetGuildAsync(guildId);
         DiscordChannel channel = await guild.GetChannelAsync(channelId);
 
         DiscordEmbed embed = SteamNewReleasesLoaderDiscordEmbedBuilder.Build(appId, data);
-        
+
+        if (messageContent != null)
+        {
+            await channel.SendMessageAsync(messageContent, embed);   
+            
+            return;
+        }
+
         await channel.SendMessageAsync(embed);
+    }
+    
+    private async Task<string?> GetAiMessage(SteamAppDetails appDetails)
+    {
+        try
+        {
+            var inputMessages = new List<ChatMessage>();
+
+            // Системное сообщение — задает стиль и правила
+            inputMessages.Add(new SystemChatMessage(
+                """
+                Ты — игровой Discord-бот. Твоя задача — делать короткие и дружелюбные комментарии о новых играх, которые бот только что нашёл. 
+                Начинай сообщение разнообразно: можно 'Нашёл интересную игру!' 'Советую поиграть', и т.д. 
+                Сделай текст емким, выделяй интересные особенности игры.
+                """
+            ));
+
+            // Сообщение пользователя — описание игры
+            string description = $"{appDetails.Name}: {appDetails.ShortDescription}\n" +
+                                 $"Жанры: {string.Join(", ", appDetails.Genres.Select(g => g.Description))}\n" +
+                                 $"Категории: {string.Join(", ", appDetails.Categories.Select(c => c.Description))}\n";
+
+            inputMessages.Add(new UserChatMessage($"Новая игра найдена:\n{description}"));
+
+            var options = new ChatCompletionOptions
+            {
+                MaxOutputTokenCount = 300,
+                Temperature = 0.7f,
+                TopP = 0.9f,
+                FrequencyPenalty = 0.2f,
+                PresencePenalty = 0.3f
+            };
+
+            ClientResult<ChatCompletion> result = await _client.CompleteChatAsync(inputMessages, options);
+
+            string responseText = result.Value.Content[0].Text.Trim();
+            return responseText;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate AI message for game '{GameName}'", appDetails.Name);
+            
+            return null;
+        }
     }
 }
