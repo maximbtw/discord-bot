@@ -1,24 +1,16 @@
 ﻿using System.ClientModel;
-using Bot.Application.Chat;
 using Bot.Application.Chat.OpenAiImpersonationChat;
 using Bot.Application.Chat.OpenAiSimpleChat;
 using Bot.Application.Infrastructure.Configuration;
-using Bot.Application.Services;
-using Bot.Contracts.Message;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenAI;
 using OpenAI.Chat;
 
-namespace Bot.Application;
+namespace Bot.Application.Chat;
 
 public static class DependencyInjectionExtensions
 {
-    public static void RegisterServices(this IServiceCollection services)
-    {
-        services.AddScoped<IMessageService, MessageService>();
-    }
-    
     public static void RegisterAiChat(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<ChatClient>(_ =>

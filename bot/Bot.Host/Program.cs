@@ -1,12 +1,13 @@
 ﻿using System.Threading.Tasks;
-using Bot.Application;
+using Bot.Application.Chat;
 using Bot.Application.Infrastructure.Configuration;
+using Bot.Application.Jobs;
+using Bot.Application.Services;
 using Bot.Commands;
 using Bot.Domain;
 using Bot.Events;
 using Bot.Host;
 using DSharpPlus;
-using DSharpPlus.Commands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,6 +35,7 @@ builder.ConfigureServices(x =>
     x.RegisterRepositories();
     x.RegisterServices();
     x.RegisterAiChat(config);
+    x.RegisterJobs(config);
 
     x.AddMemoryCache();
 });
@@ -44,4 +46,6 @@ builder.RegisterEvents();
 DiscordClient client = builder.Build();
 
 await client.ConnectAsync();
+await client.StartJobs();
+
 await Task.Delay(-1);
