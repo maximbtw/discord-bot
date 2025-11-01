@@ -45,6 +45,7 @@ internal class SteamNewReleasesLoaderJob : IJob
 
     public async Task Execute(IJobExecutionContext context)
     {
+        _logger.LogInformation("Starting SteamNewReleasesLoaderJob.");
         try
         {
             await ExecuteCore();
@@ -53,6 +54,8 @@ internal class SteamNewReleasesLoaderJob : IJob
         {
             _logger.LogCritical(ex, "Error executing SteamNewReleasesLoaderJob");
         }
+        
+        _logger.LogInformation("Finished SteamNewReleasesLoaderJob.");
     }
 
     private async Task ExecuteCore()
@@ -67,6 +70,8 @@ internal class SteamNewReleasesLoaderJob : IJob
         string? lasAppId = null;
         await foreach (string appId in _service.GetLastAppIds(_settings.ReleaseCount))
         {
+            _logger.LogInformation("Processing appId {AppId}", appId);
+            
             SteamAppDetailsResponse? appDetailsResponse =
                 await _service.GetAppDetails(appId, _settings.CountryCurrencyCode, _settings.Language);
             
@@ -85,7 +90,7 @@ internal class SteamNewReleasesLoaderJob : IJob
 
             lasAppId ??= appId;
 
-            await Task.Delay(2000);
+            await Task.Delay(10000);
         }
 
         if (lasAppId != null)
@@ -115,7 +120,7 @@ internal class SteamNewReleasesLoaderJob : IJob
     {
         string? accompanyingAiMessage = null;
         
-        bool anySent = false;
+        bool needContinue = true;
         foreach (SteamNewReleasesSettingsOrm guildSettings in settings)
         {
             if (!SettingsMatched(guildSettings, data))
@@ -127,13 +132,17 @@ internal class SteamNewReleasesLoaderJob : IJob
             {
                 skipGuildIds.Add(guildSettings.GuildId);
             }
+            
+            if (settings.Count == skipGuildIds.Count)
+            {
+                needContinue = false;
+                break;
+            }
 
             if (skipGuildIds.Contains(guildSettings.GuildId))
             {
                 continue;
             }
-            
-            anySent = true;
 
             if (_settings.EnableAccompanyingAiMessage && string.IsNullOrEmpty(accompanyingAiMessage))
             {
@@ -146,7 +155,7 @@ internal class SteamNewReleasesLoaderJob : IJob
             await SendMessageToDiscordChannel(guildId, channelId, appId, data, accompanyingAiMessage);
         }
 
-        return anySent;
+        return needContinue;
     }
     
     private bool SettingsMatched(SteamNewReleasesSettingsOrm guildSettings, SteamAppDetails data)
@@ -200,9 +209,12 @@ internal class SteamNewReleasesLoaderJob : IJob
             // Системное сообщение — задает стиль и правила
             inputMessages.Add(new SystemChatMessage(
                 """
-                Ты — игровой Discord-бот. Твоя задача — делать короткие и дружелюбные комментарии о новых играх, которые бот только что нашёл. 
-                Начинай сообщение разнообразно: можно 'Нашёл интересную игру!' 'Советую поиграть', и т.д. 
-                Сделай текст емким, выделяй интересные особенности игры.
+                Ты — игровой Discord-бот с чувством юмора и лёгким сарказмом. 
+                Твоя задача — делать короткие, дружелюбные и слегка шутливые сообщения о новых играх, которые бот только что нашёл. 
+                Начинай сообщение разнообразно: "А нука мужики, смотри ч нашел!", "Внимание парни!", 
+                "Нашёл интересную игру для всех вас!", "Советую поиграть, если не боитесь...", и т.д. 
+                Добавляй немного сарказма, выделяй интересные особенности игры, делай текст кратким и емким. 
+                Не повторяйся слишком часто, удивляй участников новым тоном.
                 """
             ));
 
