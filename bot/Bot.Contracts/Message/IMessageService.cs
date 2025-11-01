@@ -1,4 +1,4 @@
-﻿using Bot.Domain.Message;
+﻿using Bot.Domain.Orms.Message;
 using Bot.Domain.Scope;
 
 namespace Bot.Contracts.Message;

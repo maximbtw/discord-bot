@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Text;
-using Bot.Domain.Message;
+using Bot.Domain.Orms.Message;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;

@@ -1,6 +1,5 @@
 ﻿using System.Text.RegularExpressions;
 using Bot.Contracts.Message;
-using Bot.Domain.Message;
 using DSharpPlus.Entities;
 
 namespace Bot.Application.Shared;

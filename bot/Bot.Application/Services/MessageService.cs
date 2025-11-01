@@ -1,5 +1,5 @@
 ﻿using Bot.Contracts.Message;
-using Bot.Domain.Message;
+using Bot.Domain.Orms.Message;
 using Bot.Domain.Scope;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

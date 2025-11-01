@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Bot.Domain.Message;
+namespace Bot.Domain.Orms.Message;
 
 [Table("Messages")]
 public class MessageOrm

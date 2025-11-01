@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Bot.Domain.Message;
+namespace Bot.Domain.Orms.Message;
 
-public class MessageTypeConfiguration : IEntityTypeConfiguration<MessageOrm>
+internal class MessageTypeConfiguration : IEntityTypeConfiguration<MessageOrm>
 {
     public void Configure(EntityTypeBuilder<MessageOrm> builder)
     {

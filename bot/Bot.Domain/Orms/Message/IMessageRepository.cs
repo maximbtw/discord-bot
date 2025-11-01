@@ -1,6 +1,6 @@
 ﻿using Bot.Domain.Scope;
 
-namespace Bot.Domain.Message;
+namespace Bot.Domain.Orms.Message;
 
 public interface IMessageRepository
 {

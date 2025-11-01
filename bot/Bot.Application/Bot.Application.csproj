@@ -10,7 +10,11 @@
 
     <ItemGroup>
       <PackageReference Include="DSharpPlus.Commands"/>
+      <PackageReference Include="HtmlAgilityPack" />
       <PackageReference Include="OpenAI" />
+      <PackageReference Include="Quartz" />
+      <PackageReference Include="Quartz.Extensions.DependencyInjection" />
+      <PackageReference Include="Quartz.Extensions.Hosting" />
       <PackageReference Include="Serilog"/>
     </ItemGroup>
 
