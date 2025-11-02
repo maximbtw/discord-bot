@@ -67,7 +67,7 @@ internal class SteamNewReleasesLoaderJob : IJob
         }
 
         var skipGuildIds = new HashSet<string>();
-        string? lasAppId = null;
+        string? lastAppId = null;
         await foreach (string appId in _service.GetLastAppIds(_settings.ReleaseCount))
         {
             _logger.LogInformation("Processing appId {AppId}", appId);
@@ -88,21 +88,23 @@ internal class SteamNewReleasesLoaderJob : IJob
                 break;
             }
 
-            lasAppId ??= appId;
+            lastAppId ??= appId;
 
             await Task.Delay(10000);
         }
 
-        if (lasAppId != null)
+        if (lastAppId != null)
         {
             await using DbScope scope = _dbScopeProvider.GetDbScope();
 
             List<string> guildIds = settings.ConvertAll(x => x.GuildId.ToString());
 
-            await _service.UpdateLastLoadedApp(lasAppId, guildIds, scope);
+            await _service.UpdateLastLoadedApp(lastAppId, guildIds, scope);
+            
+            _logger.LogInformation("AppId saved {AppId}", lastAppId);
         }
     }
-
+    
     private async Task<List<SteamNewReleasesSettingsOrm>> GetGuildsSettings()
     {
         await using DbScope scope = _dbScopeProvider.GetDbScope();
@@ -123,11 +125,6 @@ internal class SteamNewReleasesLoaderJob : IJob
         bool needContinue = true;
         foreach (SteamNewReleasesSettingsOrm guildSettings in settings)
         {
-            if (!SettingsMatched(guildSettings, data))
-            {
-                continue;
-            }
-
             if (guildSettings.LastLoadedAppId == appId)
             {
                 skipGuildIds.Add(guildSettings.GuildId);
@@ -140,6 +137,11 @@ internal class SteamNewReleasesLoaderJob : IJob
             }
 
             if (skipGuildIds.Contains(guildSettings.GuildId))
+            {
+                continue;
+            }
+            
+            if (!SettingsMatched(guildSettings, data))
             {
                 continue;
             }

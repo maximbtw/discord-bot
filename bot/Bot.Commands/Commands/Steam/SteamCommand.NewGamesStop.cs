@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel;
-using Bot.Application.Jobs.SteamNewReleasesLoader;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
-using Quartz;
 
 namespace Bot.Commands.Commands.Steam;
 
@@ -28,7 +26,7 @@ internal partial class SteamCommand
         await using DbScope scope = _scopeProvider.GetDbScope();
         
         bool paused = await _steamNewReleasesService.TryPauseProcessOnGuild(context.Guild!.Id, scope);
-        if (!paused)
+        if (paused)
         {
             await context.RespondAsync("Процесс уже был остановлен.");
             return;
