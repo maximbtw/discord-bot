@@ -116,12 +116,13 @@ internal class SteamNewReleasesLoaderJob : IJob
 
     private async Task<bool> TrySendMessageToDiscordChannels(
         string appId,
-        List<SteamNewReleasesSettingsOrm> settings, 
+        List<SteamNewReleasesSettingsOrm> settings,
         SteamAppDetails data,
         HashSet<string> skipGuildIds)
     {
         string? accompanyingAiMessage = null;
-        
+
+        var guildsToStopProcess = new HashSet<ulong>();
         bool needContinue = true;
         foreach (SteamNewReleasesSettingsOrm guildSettings in settings)
         {
@@ -129,7 +130,7 @@ internal class SteamNewReleasesLoaderJob : IJob
             {
                 skipGuildIds.Add(guildSettings.GuildId);
             }
-            
+
             if (settings.Count == skipGuildIds.Count)
             {
                 needContinue = false;
@@ -140,7 +141,7 @@ internal class SteamNewReleasesLoaderJob : IJob
             {
                 continue;
             }
-            
+
             if (!SettingsMatched(guildSettings, data))
             {
                 continue;
@@ -154,12 +155,22 @@ internal class SteamNewReleasesLoaderJob : IJob
             ulong guildId = ulong.Parse(guildSettings.GuildId);
             ulong channelId = ulong.Parse(guildSettings.ChannelId);
 
-            await SendMessageToDiscordChannel(guildId, channelId, appId, data, accompanyingAiMessage);
+            bool sent = await TrySendMessageToDiscordChannel(guildId, channelId, appId, data, accompanyingAiMessage);
+            if (!sent)
+            {
+                guildsToStopProcess.Add(guildId);
+            }
+        }
+
+        if (guildsToStopProcess.Any())
+        {
+            await using DbScope scope = _dbScopeProvider.GetDbScope();
+            await _service.TryPauseProcessOnGuilds(guildsToStopProcess, scope);   
         }
 
         return needContinue;
     }
-    
+
     private bool SettingsMatched(SteamNewReleasesSettingsOrm guildSettings, SteamAppDetails data)
     {
         if (data.Type != "game")
@@ -179,27 +190,36 @@ internal class SteamNewReleasesLoaderJob : IJob
         return true;
     }
 
-    private async Task SendMessageToDiscordChannel(
+    private async Task<bool> TrySendMessageToDiscordChannel(
         ulong guildId, 
         ulong channelId, 
         string appId, 
         SteamAppDetails data, 
         string? messageContent = null)
     {
-        // TODO: Если канал или сервер удалили?
-        DiscordGuild guild = await _discordClient.GetGuildAsync(guildId);
-        DiscordChannel channel = await guild.GetChannelAsync(channelId);
+        if (!_discordClient.Guilds.TryGetValue(guildId, out DiscordGuild? guild))
+        {
+            _logger.LogWarning("Unable to find guild {GuildId}", guildId);
+            return false;
+        }
+
+        if (!guild.Channels.TryGetValue(channelId, out DiscordChannel? channel))
+        {
+            _logger.LogWarning("Unable to find channel {ChannelId} in guild {GuildId}", channelId, guildId);
+            return false;
+        }
 
         DiscordEmbed embed = SteamNewReleasesLoaderDiscordEmbedBuilder.Build(appId, data);
-
         if (messageContent != null)
         {
             await channel.SendMessageAsync(messageContent, embed);   
-            
-            return;
         }
-
-        await channel.SendMessageAsync(embed);
+        else
+        {
+            await channel.SendMessageAsync(embed);   
+        }
+        
+        return true;
     }
     
     private async Task<string?> GetAiMessage(SteamAppDetails appDetails)
@@ -212,10 +232,9 @@ internal class SteamNewReleasesLoaderJob : IJob
                 """
                 Ты — игровой Discord-бот с чувством юмора и лёгким сарказмом. 
                 Твоя задача — делать короткие, дружелюбные и слегка шутливые сообщения о новых играх, которые бот только что нашёл. 
-                Начинай сообщение разнообразно: "А нука мужики, смотри ч нашел!", "Внимание парни!", 
-                "Нашёл интересную игру для всех вас!", "Советую поиграть, если не боитесь...", и т.д. 
-                Добавляй немного сарказма, выделяй интересные особенности игры, делай текст кратким и емким. 
+                Начинай сообщение разнообразно. Добавляй немного сарказма, выделяй интересные особенности игры, делай текст кратким и емким. 
                 Не повторяйся слишком часто, удивляй участников новым тоном.
+                Будь краток.
                 """
             ));
             
@@ -227,7 +246,7 @@ internal class SteamNewReleasesLoaderJob : IJob
 
             var options = new ChatCompletionOptions
             {
-                MaxOutputTokenCount = 300,
+                MaxOutputTokenCount = 150,
                 Temperature = 0.7f,
                 TopP = 0.9f,
                 FrequencyPenalty = 0.2f,

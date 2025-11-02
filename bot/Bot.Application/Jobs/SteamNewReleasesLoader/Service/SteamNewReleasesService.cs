@@ -130,23 +130,30 @@ internal class SteamNewReleasesService : ISteamNewReleasesService
 
         await scope.CommitAsync(ct);
     }
-
-    public async Task<bool> TryPauseProcessOnGuild(ulong guildId, DbScope scope, CancellationToken ct = default)
+    
+    public async Task<bool> TryPauseProcessOnGuilds(IEnumerable<ulong> guildIds, DbScope scope, CancellationToken ct = default)
     {
-        SteamNewReleasesSettingsOrm? orm = await _settingsRepository
+        List<string> ids  = guildIds.Select(x=>x.ToString()).ToList();
+
+        List<SteamNewReleasesSettingsOrm> orms = await _settingsRepository
             .GetUpdateQueryable(scope)
-            .FirstOrDefaultAsync(x => x.GuildId == guildId.ToString(), ct);
-        
-        if (orm is null || !orm.Pause)
+            .Where(x => ids.Contains(x.GuildId))
+            .Where(x => !x.Pause)
+            .ToListAsync(ct);
+
+        if (orms.Any())
         {
-            return false;
+            foreach (SteamNewReleasesSettingsOrm orm in orms)
+            {
+                orm.Pause = true;
+            }
+
+            await scope.CommitAsync(ct);
+
+            return true;
         }
 
-        orm.Pause = true;
-
-        await scope.CommitAsync(ct);
-
-        return true;
+        return false;
     }
 
     public async Task UpdateLastLoadedApp(string appId, List<string> guildIds, DbScope scope, CancellationToken ct = default)
