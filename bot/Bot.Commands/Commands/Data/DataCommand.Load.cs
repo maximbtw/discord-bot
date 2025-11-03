@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Threading.Channels;
+using Bot.Application.Chat;
 using Bot.Application.Shared;
 using Bot.Commands.Checks.RequireApplicationOwner;
 using Bot.Contracts.Message;
@@ -149,7 +150,7 @@ internal partial class DataCommand
 
             await foreach (DiscordMessage message in messages)
             {
-                if (!DiscordMessageHelper.MessageIsValid(message, context.Client.CurrentUser.Id))
+                if (!ChatHelper.IsValidChatMessage(message))
                 {
                     continue;
                 }

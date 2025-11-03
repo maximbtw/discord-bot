@@ -6,6 +6,8 @@ namespace Bot.Application.Chat;
 
 public class ChatSettings
 {
+    public bool Enabled { get; set; }
+    
     public OpenAiSimpleChatOptions SimpleChatOptions { get; set; } = null!;
     
     public OpenAiImpersonationChatOptions ImpersonationChatOptions { get; set; } = null!;

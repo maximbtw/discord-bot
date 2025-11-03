@@ -87,4 +87,22 @@ public static class ChatHelper
 
         return result;
     }
+    
+    public static bool IsValidChatMessage(DiscordMessage message)
+    {
+        return !string.IsNullOrWhiteSpace(message.Content) &&
+               message.Author != null &&
+               ShouldBotRespondToMessageType(message.MessageType);
+    }
+    
+    public static bool ShouldBotRespondToMessageType(DiscordMessageType? type)
+    {
+        return type switch
+        {
+            DiscordMessageType.Default => true,
+            DiscordMessageType.Reply => true,
+            DiscordMessageType.ThreadStarterMessage => true,
+            _ => false
+        };
+    }
 }
