@@ -2,7 +2,7 @@
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Bot.Domain.Message;
+namespace Bot.Domain.Orms.Message;
 
 internal class MessageRepository : IMessageRepository
 {

@@ -10,13 +10,22 @@
 
     <ItemGroup>
       <PackageReference Include="DSharpPlus.Commands"/>
+      <PackageReference Include="HtmlAgilityPack" />
       <PackageReference Include="OpenAI" />
+      <PackageReference Include="Quartz" />
+      <PackageReference Include="Quartz.Extensions.DependencyInjection" />
       <PackageReference Include="Serilog"/>
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Bot.Contracts\Bot.Contracts.csproj" />
       <ProjectReference Include="..\Bot.Domain\Bot.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Quartz">
+        <HintPath>..\Bot.Host\bin\Debug\net9.0\Quartz.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>
