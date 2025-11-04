@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using Bot.Application.Chat.OpenAiImpersonationChat;
+using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
@@ -8,17 +8,15 @@ namespace Bot.Commands.Commands.Chat;
 
 internal partial class ChatCommand
 {
-    [Command("reset")]
+    [Command("reset-cache")]
     [Description("Чистит кэш переписки. Восстанавливает стандартные настройки чата.")]
     [RequireGuild]
     [RequirePermissions([],[DiscordPermission.Administrator])]
-    public async ValueTask ExecuteReset(
+    public async ValueTask ExecuteResetCache(
         CommandContext context, 
         [Description("Канал для которого стоит отчистить кэш.")] DiscordChannel? channel = null)
     {
         DiscordGuild guild = context.Guild!;
-        
-        OpenAiImpersonationChatOptions.GuildIdToImpersonationUserIdIndex.TryRemove(guild.Id, out _);
 
         var channelsIds = new List<ulong>();
         if (channel is not null)
@@ -30,8 +28,25 @@ internal partial class ChatCommand
             channelsIds.AddRange(guild.Channels.Keys);
         }
 
-        _messageService.ClearCache(guild.Id, channelsIds);
+        _chatService.ResetCache(guild.Id, channelsIds);
 
-        await context.RespondAsync("Кэш переписки и настройки чата успешно сброшены.");
+        await context.RespondAsync("Кэш переписки сброшен.");
+    }
+    
+    [Command("reset-settings")]
+    [Description("Восстанавливает стандартные настройки чата.")]
+    [RequireGuild]
+    [RequirePermissions([],[DiscordPermission.Administrator])]
+    public async ValueTask ExecuteResetSettings(CommandContext context)
+    {
+        DiscordGuild guild = context.Guild!;
+
+        await using DbScope scope = _scopeProvider.GetDbScope();
+
+        await _chatService.ResetChatSettings(guild.Id, scope);
+
+        await scope.CommitAsync();
+
+        await context.RespondAsync("Настройки чата успешно сброшены.");
     }
 }

@@ -52,7 +52,7 @@ internal partial class DataCommand
     {
         await using DbScope scope = _scopeProvider.GetDbScope();
         
-        IQueryable<MessageOrm> query = _messageService
+        IQueryable<MessageOrm> query = _chatService
             .GetQueryable(scope)
             .Where(x => x.GuildId == context.Guild!.Id.ToString());
 

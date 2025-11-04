@@ -3,7 +3,7 @@ using System.Threading.Channels;
 using Bot.Application.Chat;
 using Bot.Application.Shared;
 using Bot.Commands.Checks.RequireApplicationOwner;
-using Bot.Contracts.Message;
+using Bot.Contracts.Chat;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
@@ -59,7 +59,7 @@ internal partial class DataCommand
 
         await using DbScope scope = _scopeProvider.GetDbScope();
 
-        List<string> alreadyLoadedChannels = await _messageService
+        List<string> alreadyLoadedChannels = await _chatService
             .GetQueryable(scope)
             .Where(x => x.GuildId == context.Guild!.Id.ToString())
             .Where(x => channelIds.Contains(x.ChannelId))
@@ -189,7 +189,7 @@ internal partial class DataCommand
         {
             await using DbScope scope = _scopeProvider.GetDbScope();
 
-            await _messageService.Add(buffer, scope, CancellationToken.None);
+            await _chatService.AddMessages(buffer, scope, CancellationToken.None);
 
             await scope.CommitAsync();
             await dispatcher.AddSavedMessages(buffer.Count);

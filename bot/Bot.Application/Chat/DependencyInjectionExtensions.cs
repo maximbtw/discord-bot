@@ -1,6 +1,7 @@
 ﻿using System.ClientModel;
-using Bot.Application.Chat.OpenAiImpersonationChat;
-using Bot.Application.Chat.OpenAiSimpleChat;
+using Bot.Application.Chat.DefaultChat;
+using Bot.Application.Chat.ImpersonationChat;
+using Bot.Application.Chat.Services;
 using Bot.Application.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,7 @@ namespace Bot.Application.Chat;
 
 public static class DependencyInjectionExtensions
 {
-    public static void RegisterAiChat(this IServiceCollection services, IConfiguration configuration)
+    public static void RegisterChat(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<ChatClient>(_ =>
         {
@@ -28,8 +29,10 @@ public static class DependencyInjectionExtensions
             return new ChatClient(settings.Model, credential, options);
         });
 
-        services.AddTransient<IChatStrategy, OpenAiImpersonationChatStrategy>();
-        services.AddTransient<IChatStrategy, OpenAiSimpleChatStrategy>();
+        services.AddTransient<IChatStrategy, ImpersonationChatStrategy>();
+        services.AddTransient<IChatStrategy, DefaultChatStrategy>();
         services.AddTransient<ChatStrategyResolver>();
+        
+        services.AddScoped<IChatService, ChatService>();
     }
 }

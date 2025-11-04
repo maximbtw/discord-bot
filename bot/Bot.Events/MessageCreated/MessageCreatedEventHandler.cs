@@ -1,6 +1,7 @@
 ﻿using Bot.Application.Chat;
+using Bot.Application.Chat.Services;
 using Bot.Application.Shared;
-using Bot.Contracts.Message;
+using Bot.Contracts.Chat;
 using Bot.Domain.Scope;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
@@ -11,29 +12,34 @@ namespace Bot.Events.MessageCreated;
 
 internal class MessageCreatedEventHandler : IEventHandler<MessageCreatedEventArgs>
 {
-    private readonly IMessageService _messageService;
-    private readonly IDbScopeProvider _dbScopeProvider;
+    private readonly IChatService _chatService;
+    private readonly IDbScopeProvider _scopeProvider;
     private readonly ChatSettings _chatSettings;
 
     private readonly MessageCreatedEventChatHandler _chatHandler;
 
     public MessageCreatedEventHandler(
-        IMessageService messageService,
-        IDbScopeProvider dbScopeProvider, 
+        IChatService chatService,
+        IDbScopeProvider scopeProvider, 
         ChatStrategyResolver chatStrategyResolver, 
         IConfiguration configuration, 
         ILogger<MessageCreatedEventHandler> logger)
     {
-        _messageService = messageService;
-        _dbScopeProvider = dbScopeProvider;
+        _chatService = chatService;
+        _scopeProvider = scopeProvider;
         _chatSettings =  configuration.GetSection(nameof(ChatSettings)).Get<ChatSettings>()!;
-        
-        _chatHandler = new MessageCreatedEventChatHandler(dbScopeProvider, chatStrategyResolver, _chatSettings, logger);
+
+        _chatHandler = new MessageCreatedEventChatHandler(
+            scopeProvider,
+            chatService,
+            chatStrategyResolver,
+            _chatSettings,
+            logger);
     }
     
     public async Task HandleEventAsync(DiscordClient sender, MessageCreatedEventArgs eventArgs)
     {
-        if (ChatHelper.IsValidChatMessage(eventArgs.Message))
+        if (!ChatHelper.IsValidChatMessage(eventArgs.Message))
         {
             return;
         }
@@ -48,11 +54,11 @@ internal class MessageCreatedEventHandler : IEventHandler<MessageCreatedEventArg
 
     private async Task SaveMessage(MessageCreatedEventArgs eventArgs)
     {
-        await using DbScope scope = _dbScopeProvider.GetDbScope();
+        await using DbScope scope = _scopeProvider.GetDbScope();
         
         Message message = DiscordContentMapper.MapDiscordMessageToMessage(eventArgs.Message);
 
-        await _messageService.Add(message, scope, CancellationToken.None, saveToCache: true);
+        await _chatService.AddMessage(message, scope, CancellationToken.None, saveToCache: true);
 
         await scope.CommitAsync();
     }

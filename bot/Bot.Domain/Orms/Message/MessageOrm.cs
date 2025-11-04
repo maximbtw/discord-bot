@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Bot.Domain.Orms.Message;
 
 [Table("Messages")]
-public class MessageOrm
+public class MessageOrm : IOrm
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]

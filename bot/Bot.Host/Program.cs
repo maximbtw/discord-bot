@@ -2,7 +2,6 @@
 using Bot.Application.Chat;
 using Bot.Application.Infrastructure.Configuration;
 using Bot.Application.Jobs;
-using Bot.Application.Services;
 using Bot.Commands;
 using Bot.Domain;
 using Bot.Events;
@@ -33,8 +32,7 @@ builder.ConfigureServices(x =>
     
     x.RegisterDb(botConfiguration.DatabaseOptions);
     x.RegisterRepositories();
-    x.RegisterServices();
-    x.RegisterAiChat(config);
+    x.RegisterChat(config);
     x.RegisterJobs(config);
 
     x.AddMemoryCache();

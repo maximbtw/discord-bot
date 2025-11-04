@@ -38,7 +38,7 @@ internal partial class DataCommand
         
         List<ulong> channelIds = channels == null ? [] : channels.Select(x => x.Id).ToList();
 
-        await _messageService.DeleteGuildMessages(context.Guild!.Id, channelIds, scope, CancellationToken.None);
+        await _chatService.DeleteGuildMessages(context.Guild!.Id, channelIds, scope, CancellationToken.None);
 
         await scope.CommitAsync();
 

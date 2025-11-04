@@ -1,4 +1,6 @@
-﻿namespace Bot.Application.Chat;
+﻿using Bot.Domain.Orms.ChatSettings;
+
+namespace Bot.Application.Chat;
 
 public class ChatStrategyResolver
 {

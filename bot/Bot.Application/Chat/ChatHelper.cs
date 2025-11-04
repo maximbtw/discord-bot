@@ -1,5 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using Bot.Contracts.Message;
+using Bot.Application.Chat.Services;
 using DSharpPlus.Entities;
 using OpenAI.Chat;
 
@@ -7,41 +7,7 @@ namespace Bot.Application.Chat;
 
 public static class ChatHelper
 {
-    public static IEnumerable<ChatMessage> LoadHistoryMessagesFromCache(
-        IMessageService messageService,
-        ulong guildId,
-        ulong channelId,
-        ulong newMessageId,
-        int messageContentMaxLength,
-        int maxMessages)
-    {
-        List<Message> cachedMessages = messageService.GetMessagesFromCache(guildId, channelId)
-            .Where(x => x.Id != newMessageId)
-            .TakeLast(maxMessages)
-            .ToList();
-
-        cachedMessages.Reverse();
-
-        foreach (Message cachedMessage in cachedMessages)
-        {
-            if (cachedMessage.UserIsBot)
-            {
-                string content = TruncateMessageContent(cachedMessage.Content, messageContentMaxLength);
-                
-                yield return new AssistantChatMessage(content);
-            }
-            else
-            {
-                string content = TruncateMessageContent(cachedMessage.Content, messageContentMaxLength);
-                
-                yield return new UserChatMessage(content)
-                {
-                    ParticipantName = cachedMessage.UserNickname
-                };
-            }
-        }
-    }
-
+    public static readonly Regex MentionRegex = new(@"(.)\1{5,}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public static string TruncateMessageContent(string content, int? maxLength)
     {
         if (string.IsNullOrEmpty(content))
@@ -76,9 +42,8 @@ public static class ChatHelper
         {
             userIndex.Add(member.Username, member.Id);
         }
-
-        var regex = new Regex(@"@(\w+)", RegexOptions.Compiled);
-        string result = regex.Replace(content, match =>
+        
+        string result = MentionRegex.Replace(content, match =>
         {
             var username = match.Groups[1].Value;
 

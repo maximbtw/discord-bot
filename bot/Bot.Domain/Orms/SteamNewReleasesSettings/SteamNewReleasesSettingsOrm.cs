@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Bot.Domain.Orms.SteamNewReleasesSettings;
 
 [Table("SteamNewReleasesSettings")]
-public class SteamNewReleasesSettingsOrm
+public class SteamNewReleasesSettingsOrm : IOrm
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
