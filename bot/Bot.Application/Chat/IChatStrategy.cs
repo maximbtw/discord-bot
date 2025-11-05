@@ -1,4 +1,5 @@
-﻿using Bot.Domain.Scope;
+﻿using Bot.Contracts.Chat;
+using Bot.Domain.Orms.ChatSettings;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 
@@ -8,5 +9,5 @@ public interface IChatStrategy
 {
     ChatType Type { get; }
 
-    Task Execute(DiscordClient client, MessageCreatedEventArgs args, DbScope scope, CancellationToken ct);
+    Task Execute(DiscordClient client, MessageCreatedEventArgs args, GuildChatSettings guildSettings, CancellationToken ct);
 }

@@ -22,7 +22,7 @@ public interface ISteamNewReleasesService
 
     Task AddOrUpdateGuildSettings(ulong guildId, ulong channelId, DbScope scope, CancellationToken ct = default);
 
-    Task<bool> TryPauseProcessOnGuild(ulong guildId, DbScope scope, CancellationToken ct = default);
+    Task<bool> TryPauseProcessOnGuilds(IEnumerable<ulong> guildIds, DbScope scope, CancellationToken ct = default);
     
     Task UpdateLastLoadedApp(string appId, List<string> guildIds, DbScope scope, CancellationToken ct = default);
 }

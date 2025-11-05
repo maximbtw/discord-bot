@@ -1,4 +1,4 @@
-﻿using Bot.Contracts.Message;
+﻿using Bot.Application.Chat.Services;
 using Bot.Domain.Scope;
 using DSharpPlus.Commands;
 
@@ -8,13 +8,13 @@ namespace Bot.Commands.Commands.Data;
 internal partial class DataCommand : ICommand
 {
     private readonly IDbScopeProvider _scopeProvider;
-    private readonly IMessageService _messageService;
+    private readonly IChatService _chatService;
 
     public DataCommand(
         IDbScopeProvider scopeProvider,
-        IMessageService messageService)
+        IChatService chatService)
     {
         _scopeProvider = scopeProvider;
-        _messageService = messageService;
+        _chatService = chatService;
     }
 }

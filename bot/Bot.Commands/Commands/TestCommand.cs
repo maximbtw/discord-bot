@@ -23,6 +23,20 @@ public class TestCommand : ICommand
         _client = client;
     }
 
+    public enum ChatType
+    {
+        Default,
+        Immersion
+    }
+
+    [Command("test2")]
+    [MyRequireApplicationOwner]
+    public async ValueTask Execute2(CommandContext context, ChatType  chatType)
+    {
+        return;
+    }
+        
+
     [Command("test")]
     [MyRequireApplicationOwner]
     public async ValueTask Execute(CommandContext context)

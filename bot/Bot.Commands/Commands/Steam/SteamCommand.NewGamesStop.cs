@@ -24,8 +24,8 @@ internal partial class SteamCommand
         }
 
         await using DbScope scope = _scopeProvider.GetDbScope();
-        
-        bool paused = await _steamNewReleasesService.TryPauseProcessOnGuild(context.Guild!.Id, scope);
+
+        bool paused = await _steamNewReleasesService.TryPauseProcessOnGuilds([context.Guild!.Id], scope);
         if (paused)
         {
             await context.RespondAsync("Процесс уже был остановлен.");

@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using Bot.Domain.Configuration;
+using Bot.Domain.Orms;
+using Bot.Domain.Orms.Message;
 using Bot.Domain.Scope;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,20 +10,20 @@ namespace Bot.Domain;
 
 public static class DependencyInjectionExtensions
 {
+    private const string RepositorySuffix = "Repository";
+    
     public static void RegisterRepositories(this IServiceCollection services)
     {
-        const string repositorySuffix = "Repository";
-        
         IEnumerable<Type> repositories =  Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => 
                 t is { IsClass: true, IsAbstract: false } &&
-                t.GetInterfaces().Any(i => i.Name.EndsWith(repositorySuffix)));
+                t.GetInterfaces().Any(i => i.Name.EndsWith(RepositorySuffix)));
 
         foreach (Type repoType in repositories)
         {
             Type? interfaceType = repoType.GetInterfaces()
-                .FirstOrDefault(i => i.Name.EndsWith(repositorySuffix));
+                .FirstOrDefault(i => i.Name.EndsWith(RepositorySuffix));
 
             if (interfaceType != null)
             {
