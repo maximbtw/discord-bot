@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using Bot.Contracts.Chat;
 using Bot.Domain.Orms.ChatSettings;
 using Bot.Domain.Scope;
@@ -38,13 +37,19 @@ internal partial class ChatCommand
     [RequirePermissions([], [DiscordPermission.Administrator])]
     public async ValueTask SetChatSettings(
         CommandContext context,
-        [Description("Тип чата (Default, Roleplay, etc.)")]                 ChatType? chatType = null,
-        [Description("Шанс ответа")]                        [Range(0, 100)] int? responseChance = null,
-        [Description("Лимит истории сообщений (1-40)")]     [Range(0, 40)]  int? chatHistoryLimit = null,
-        [Description("Заменять упоминания (true/false)")]                   bool? replaceMentions = null)
+        [Description("Тип чата (Default, Roleplay, etc.)")] ChatType? chatType = null,
+        [Description("Шанс ответа (0-100)")]                        int? responseChance = null,
+        [Description("Лимит истории сообщений (1-40)")]     int? chatHistoryLimit = null,
+        [Description("Заменять упоминания (true/false)")]   bool? replaceMentions = null)
     {
+        bool valid = await Validate();
+        if (!valid)
+        {
+            return;
+        }
+        
         DiscordGuild guild = context.Guild!;
-    
+
         await using DbScope scope = _scopeProvider.GetDbScope();
         GuildChatSettings settings = await _chatService.GetGuildSettings(guild.Id, scope);
 
@@ -58,5 +63,23 @@ internal partial class ChatCommand
         await scope.CommitAsync();
 
         await context.RespondAsync("Настройки успешно обновлены!");
+        return;
+
+        async Task<bool> Validate()
+        {
+            if (responseChance is < 0 or > 100)
+            {
+                await context.RespondAsync("Шанс ответа должен быть от 0 до 100");
+                return false;
+            }
+
+            if (chatHistoryLimit is < 1 or > 40)
+            {
+                await context.RespondAsync("Лимит истории должен быть от 0 до 40");
+                return false;
+            }
+            
+            return true;
+        }
     }
 }
