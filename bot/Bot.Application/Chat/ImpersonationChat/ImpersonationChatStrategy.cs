@@ -112,7 +112,10 @@ internal class ImpersonationChatStrategy  : ChatStrategyBase<ImpersonationChatOp
         }
         
         // TODO: Все сообщения грузятся в паямть.
-        List<string> messages = await query.Select(x => x.Content).ToListAsync(ct);
+        List<string> messages = await query
+            .OrderByDescending(x => x.Timestamp)
+            .Select(x => x.Content)
+            .ToListAsync(ct);
 
         return FilterMessages(messages, chatOptions.ExampleMessagesTokenLimit).ToList();
     }
