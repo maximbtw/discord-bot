@@ -32,7 +32,7 @@ Must specify API keys in appsettings.json
 }
 ```
 
-## Quick Start
+## Start
 
 1. Clone:
 
