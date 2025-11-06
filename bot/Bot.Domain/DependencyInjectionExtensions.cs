@@ -34,14 +34,7 @@ public static class DependencyInjectionExtensions
     {
         if (!databaseOptions.UseInMemoryDatabase)
         {
-            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(databaseOptions.ConnectionString,
-                npgsql =>
-                {
-                    npgsql.EnableRetryOnFailure(
-                        maxRetryCount: 5,
-                        maxRetryDelay: TimeSpan.FromSeconds(10),
-                        errorCodesToAdd: null);
-                }));
+            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(databaseOptions.ConnectionString));
 
             services.AddScoped<IDbScopeProvider, DbScopeProvider>();
         

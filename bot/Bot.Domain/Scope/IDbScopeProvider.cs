@@ -4,5 +4,5 @@ namespace Bot.Domain.Scope;
 
 public interface IDbScopeProvider
 {
-    DbScope GetDbScope(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
+    DbScope GetDbScope(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, int retryCount = 3);
 }

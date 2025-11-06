@@ -11,10 +11,8 @@ internal class InMemoryDbScopeProvider : IDbScopeProvider
         _context = context;
     }
 
-    public DbScope GetDbScope(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+    public DbScope GetDbScope(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, int retryCount = 1)
     {
         return new DbScope(_context, useTransaction: false);
     }
-
-    public bool DatabaseIsRelation() => false;
 }
