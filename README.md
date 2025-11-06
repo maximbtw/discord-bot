@@ -34,13 +34,7 @@ Must specify API keys in appsettings.json
 
 ## Start
 
-1. Clone:
+Build and run with Docker:
 
-   ```bash
-   git clone https://github.com/maximbtw/discord-bot.git
-   cd discord-bot
-   
-2. Build:
-
-   ```bash
-   docker build -t bot -f Bot.Host/Dockerfile ../../discrod-bot && docker run --rm bot
+```bash
+docker build -t bot -f Bot.Host/Dockerfile ../../discrod-bot && docker run --rm bot
