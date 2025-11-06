@@ -1,7 +1,5 @@
 ﻿using System.Text.RegularExpressions;
-using Bot.Application.Chat.Services;
 using DSharpPlus.Entities;
-using OpenAI.Chat;
 
 namespace Bot.Application.Chat;
 

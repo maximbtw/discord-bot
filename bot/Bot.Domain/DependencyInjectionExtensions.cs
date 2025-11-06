@@ -1,7 +1,5 @@
 ﻿using System.Reflection;
 using Bot.Domain.Configuration;
-using Bot.Domain.Orms;
-using Bot.Domain.Orms.Message;
 using Bot.Domain.Scope;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,11 +34,18 @@ public static class DependencyInjectionExtensions
     {
         if (!databaseOptions.UseInMemoryDatabase)
         {
-            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(databaseOptions.ConnectionString));
+            services.AddDbContext<DiscordDbContext>(options => options.UseNpgsql(databaseOptions.ConnectionString,
+                npgsql =>
+                {
+                    npgsql.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null);
+                }));
 
             services.AddScoped<IDbScopeProvider, DbScopeProvider>();
         
-            Migrator.MigrateDatabase(databaseOptions.ConnectionString!);    
+            Migrator.MigrateDatabase(databaseOptions.ConnectionString);    
         }
         else
         {

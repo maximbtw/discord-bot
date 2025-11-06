@@ -13,6 +13,4 @@ internal class DbScopeProvider : IDbScopeProvider
 
     public DbScope GetDbScope(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted) =>
         new(_dbContext, useTransaction: true,  isolationLevel);
-
-    public bool DatabaseIsRelation() => true;
 }
