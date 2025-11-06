@@ -11,7 +11,7 @@ A custom Discord bot built for my guild — tailored to our needs, featuring AI-
 
 ### Prerequisites
 - Discord Bot Token ([Discord Developer Portal](https://discord.com/developers/applications))
-- OpenRouter Token ([OpenRouter API](https://openrouter.ai/))
+- OpenRouter Token ([OpenRouter API](https://openrouter.ai/)) (also support openAI)
 
 ### Configuration
 Must specify API keys in appsettings.json
