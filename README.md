@@ -41,4 +41,5 @@ docker build -t bot -f Bot.Host/Dockerfile ../../discrod-bot && docker run --rm 
 ```
 
 ## Example
-https://github.com/maximbtw/discord-bot/blob/main/docs/example.png
+![example](https://github.com/maximbtw/discord-bot/blob/main/docs/example.png)
+
