@@ -38,3 +38,7 @@ Build and run with Docker:
 
 ```bash
 docker build -t bot -f Bot.Host/Dockerfile ../../discrod-bot && docker run --rm bot
+```
+
+## Example
+https://github.com/maximbtw/discord-bot/blob/main/docs/example.png
