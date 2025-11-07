@@ -1,6 +1,6 @@
 # Discord Bot
 
-A custom Discord bot built for my guild — tailored to our needs, featuring AI-powered chat, steam gaming updates, and other small commands.
+A special Discord bot created for my guild — tailored to our needs, with an AI chat with multiple modes, notifications about new Steam releases, and other small commands.
 
 ## Features
 
