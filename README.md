@@ -4,7 +4,7 @@ A special Discord bot created for my guild — tailored to our needs, with an AI
 
 ## Features
 
-- **Chat with AI**: Integrated AI [OpenRouter](https://openrouter.ai/) for initiating chat with a bot with several working modes.
+- **Chat with AI**: Integrated AI for initiating chat with a bot with several working modes.
 - **Upcoming Game Alerts**: Notifies about new multiplayer games released on Steam.
 
 ## Getting Started
@@ -29,6 +29,17 @@ Must specify API keys in appsettings.json
   "ApiKey": "<YOUR_OPENROUTER_API_KEY>",
   "UseOpenRouter": true,
   "Model": "meta-llama/llama-3.3-70b-instruct:free"
+}
+```
+
+You can disable all AI functionality and use only notifications for new Steam releases.
+```json
+"ChatSettings": {
+  "Enabled": false
+},
+"SteamNewReleasesLoaderSettings": {
+  "Enabled": true,
+  "EnableAccompanyingAiMessage": false
 }
 ```
 
