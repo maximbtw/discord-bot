@@ -48,7 +48,8 @@ You can disable all AI functionality and use only notifications for new Steam re
 Build and run with Docker:
 
 ```bash
-docker build -t bot -f Bot.Host/Dockerfile ../../discrod-bot && docker run --rm bot
+docker build -t bot -f bot/Bot.Host/Dockerfile .
+docker run --rm bot
 ```
 
 ## Example
