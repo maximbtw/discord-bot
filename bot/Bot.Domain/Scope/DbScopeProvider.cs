@@ -28,8 +28,8 @@ internal class DbScopeProvider : IDbScopeProvider
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, 
-                    "Failed to create DbScope (attempt {Attempt} of {MaxRetries}). Retrying in {Delay}ms...", 
+                _logger.LogWarning(
+                    "Failed to create DbScope (attempt {Attempt} of {MaxRetries}). Retrying in {Delay}ms...",
                     attempts, retryCount, delay.TotalMilliseconds);
 
                 if (attempts >= retryCount)

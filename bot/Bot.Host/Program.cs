@@ -5,7 +5,6 @@ using Bot.Application.Jobs;
 using Bot.Commands;
 using Bot.Domain;
 using Bot.Events;
-using Bot.Host;
 using DSharpPlus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,8 +15,6 @@ IConfigurationRoot config = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-ILoggerFactory loggerFactory = LoggingConfigurator.CreateLoggerFactory();
-
 var botConfiguration = config.GetSection(nameof(BotConfiguration)).Get<BotConfiguration>()!;
 
 var builder = DiscordClientBuilder.CreateDefault(
@@ -26,9 +23,11 @@ var builder = DiscordClientBuilder.CreateDefault(
 
 builder.ConfigureServices(x =>
 {
-    x.AddSingleton(loggerFactory);
     x.AddSingleton<IConfiguration>(config);
-    x.AddLogging(); 
+    x.AddLogging(logging =>
+    {
+        logging.AddConfiguration(config.GetSection("Logging"));
+    });
     
     x.RegisterDb(botConfiguration.DatabaseOptions);
     x.RegisterRepositories();

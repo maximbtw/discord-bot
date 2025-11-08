@@ -4,6 +4,7 @@ using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bot.Commands;
 
@@ -16,7 +17,12 @@ public static class DependencyInjectionExtensions
             UseDefaultCommandErrorHandler = false
         };
 
-        builder.UseCommands((_, extension) =>
+        builder.ConfigureServices(x =>
+        {
+            x.AddSingleton<CommandErroredHandler>();
+        });
+
+        builder.UseCommands((s, extension) =>
         {
             IEnumerable<Type> commandTypes = Assembly.GetExecutingAssembly()
                 .GetTypes()
@@ -35,8 +41,11 @@ public static class DependencyInjectionExtensions
             extension.AddProcessor(textCommandProcessor);
 
             extension.AddCheck<MyRequireApplicationOwnerCheck>();
+            
+            var commandErroredHandler = s.GetRequiredService<CommandErroredHandler>();
 
-            extension.CommandErrored += CommandErroredHandler.HandleHandle;
+            extension.CommandErrored += commandErroredHandler.HandleHandle;
+            
         }, commandsConfiguration);
     }
 }
