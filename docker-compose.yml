@@ -6,21 +6,11 @@ services:
       dockerfile: bot/Bot.Host/Dockerfile
     environment:
       - DOTNET_ENVIRONMENT=Production
-      # Discord bot
+      # BotConfiguration
       - BotConfiguration__Token=${DISCORD_TOKEN}
-      - BotConfiguration__Prefix=/
-      # Database
       - BotConfiguration__DatabaseOptions__ConnectionString=Host=db;Port=5432;Database=discord-prod;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      # AI Chat
-      - BotConfiguration__AiChatOptions__Strategy=OpenRouter
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__ApiKey=${OPENROUTER_API_KEY}
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__Model=meta-llama/llama-3.3-70b-instruct:free
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__SystemMessage=Ты чат бот в дискорде, пытайся соответствовать
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__BadRequestMessage=Мне пока нечего ответить 😕
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__MaxChatHistoryMessages=20
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__MaxMessageLength=200
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__TimeOutInSeconds=20
-      - BotConfiguration__AiChatOptions__OpenRouterSettings__RandomMessageChance=10
+      # OpenAiSettings
+      - OpenAiSettings__ApiKey=${OPENROUTER_TOKEN}
     depends_on:
       - db
 
