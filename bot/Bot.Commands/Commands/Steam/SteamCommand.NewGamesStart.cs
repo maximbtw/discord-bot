@@ -10,7 +10,7 @@ namespace Bot.Commands.Commands.Steam;
 
 internal partial class SteamCommand
 {
-    [Command("newGamesStart")]
+    [Command("start")]
     [Description("Начинает отслеживать новые игры в Steam и публиковать co-op релизы в канал.")]
     [RequireGuild]
     [RequirePermissions([],[DiscordPermission.Administrator])]

@@ -41,5 +41,5 @@ public static partial class DiscordContentMapper
     }
 
     [GeneratedRegex(@"<@!?(\d+)>")]
-    private static partial Regex UsernameRegex();
+    public static partial Regex UsernameRegex();
 }
