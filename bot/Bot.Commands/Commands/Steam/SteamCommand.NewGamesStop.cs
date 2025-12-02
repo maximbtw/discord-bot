@@ -8,7 +8,7 @@ namespace Bot.Commands.Commands.Steam;
 
 internal partial class SteamCommand
 {
-    [Command("newGamesStop")]
+    [Command("stop")]
     [Description("Перестает отслеживать новые игры в Steam и публиковать co-op релизы в канал.")]
     [RequireGuild]
     [RequirePermissions([],[DiscordPermission.Administrator])]

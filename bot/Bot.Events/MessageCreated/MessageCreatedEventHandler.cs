@@ -39,7 +39,7 @@ internal class MessageCreatedEventHandler : IEventHandler<MessageCreatedEventArg
     
     public async Task HandleEventAsync(DiscordClient sender, MessageCreatedEventArgs eventArgs)
     {
-        if (!ChatHelper.IsValidChatMessage(eventArgs.Message))
+        if (!ChatHelper.IsValidChatMessage(eventArgs.Message) || eventArgs.Guild == null)
         {
             return;
         }
