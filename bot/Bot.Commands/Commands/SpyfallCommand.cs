@@ -81,10 +81,7 @@ internal class SpyfallCommand : ICommand
             await context.RespondAsync($"Нужно хотя бы {minRequiredMembers} человека для игры.");
             return;
         }
-
-        var spyIndex = Random.Next(members.Length);
-        DiscordMember spy = members[spyIndex];
-
+        
         Hero hero;
         try
         {
@@ -96,21 +93,40 @@ internal class SpyfallCommand : ICommand
             return;
         }
 
+        List<DiscordMember> spyMembers = members.OrderBy(x => Guid.NewGuid()).Take(spies).ToList();
+
         DiscordEmbedBuilder embed = CreateHeroEmbed(hero);
-        foreach (DiscordMember user in members)
+        
+        foreach (DiscordMember member in spyMembers)
         {
-            if (user.Id == spy.Id)
+            string spyMessage = SpyMessage(spies, spyMembers.Where(x => x.Id != member.Id));
+            
+            await member.SendMessageAsync(spyMessage);
+        }
+        
+        foreach (DiscordMember member in members)
+        {
+            if (spyMembers.All(x => x.Id != member.Id))
             {
-                await user.SendMessageAsync(
-                    "🕵️‍♂️ **Ты ШПИОН!** Твоя задача — выяснить, о каком герое говорят остальные.");
-            }
-            else
-            {
-                await user.SendMessageAsync(embed);
+                await member.SendMessageAsync(embed);   
             }
         }
 
         await context.RespondAsync("Роли розданы! Проверьте личные сообщения.");
+    }
+
+    private string SpyMessage(int spies, IEnumerable<DiscordMember> spyMembers)
+    {
+        string message = "🕵️‍♂️ **Ты ШПИОН!** Твоя задача — выяснить, о каком герое говорят остальные.";
+
+        if (spies > 1)
+        {
+            List<string> names = spyMembers.Select(x => x.DisplayName).ToList();
+            
+            message += $"\n **Шпионы**: Ты и {string.Join(", ", names)}";
+        }
+
+        return message;
     }
 
     private static DiscordEmbedBuilder CreateHeroEmbed(Hero hero)
