@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Bot.Application.Shared;
 using DSharpPlus.Commands;
@@ -8,7 +7,7 @@ using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 
-namespace Bot.Commands.Commands;
+namespace Bot.Commands.Commands.Spyfall;
 
 [Command("dspy")]
 [Description("Шпион по героям доты")]
@@ -85,7 +84,9 @@ internal class SpyfallCommand : ICommand
         Hero hero;
         try
         {
-            hero = await GetRandomDotaHeroAsync();
+            List<Hero> heroes = await GetHeroes();
+            
+            hero = heroes[Random.Next(heroes.Count)];
         }
         catch (HttpRequestException)
         {
@@ -125,34 +126,33 @@ internal class SpyfallCommand : ICommand
             
             message += $"\n **Шпионы**: Ты и {string.Join(", ", names)}";
         }
+        
+        message += "\n Вот вспомогательный инструмент: https://maximbtw.github.io/dota2-spy-tool/";
 
         return message;
     }
 
     private static DiscordEmbedBuilder CreateHeroEmbed(Hero hero)
     {
-        string imageHeroCode = hero.Name.ToLower().Replace("npc_dota_hero_", "").Replace(" ", "_").Replace("-", "");
-        string urlHeroCode = hero.LocalizedName.ToLower().Replace(" ", "");
-
         var embed = new DiscordEmbedBuilder
         {
-            Url = $"https://www.dota2.com/hero/{urlHeroCode}",
+            Url = hero.Url,
             Title = $"Герой: {hero.LocalizedName}",
             Color = DiscordColor.Blurple,
-            ImageUrl = $"https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/{imageHeroCode}.png"
+            ImageUrl = hero.ImageUrl
         };
 
         return embed;
     }
+    
 
-
-    private async Task<Hero> GetRandomDotaHeroAsync()
+    private async ValueTask<List<Hero>> GetHeroes()
     {
         if (_cachedHeroes != null)
         {
-            return _cachedHeroes[Random.Next(_cachedHeroes.Count)];
+            return _cachedHeroes;
         }
-
+        
         HttpResponseMessage response = await HttpClient.GetAsync($"{OpenDotaApiUrl}/heroes");
 
         response.EnsureSuccessStatusCode();
@@ -165,13 +165,6 @@ internal class SpyfallCommand : ICommand
             throw new InvalidOperationException("Не удалось десериализовать список героев.");
         }
 
-        return _cachedHeroes[Random.Next(_cachedHeroes.Count)];
-    }
-
-    private class Hero
-    {
-        [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
-
-        [JsonPropertyName("localized_name")] public string LocalizedName { get; set; } = string.Empty;
+        return _cachedHeroes;
     }
 }
