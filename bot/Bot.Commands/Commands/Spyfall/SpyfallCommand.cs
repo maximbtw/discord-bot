@@ -122,7 +122,7 @@ internal class SpyfallCommand : ICommand
 
         if (spies > 1)
         {
-            List<string> names = spyMembers.Select(x => x.DisplayName).ToList();
+            List<string> names = spyMembers.Select(x => x.Mention).ToList();
             
             message += $"\n **Шпионы**: Ты и {string.Join(", ", names)}";
         }
