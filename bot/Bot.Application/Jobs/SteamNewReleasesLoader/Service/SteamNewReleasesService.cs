@@ -125,6 +125,7 @@ internal class SteamNewReleasesService : ISteamNewReleasesService
         }
         else
         {
+            orm.Pause = false;
             orm.ChannelId = channelId.ToString();
         }
 
