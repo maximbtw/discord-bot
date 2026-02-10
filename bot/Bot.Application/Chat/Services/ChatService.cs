@@ -123,7 +123,8 @@ internal class ChatService : IChatService
             ResponseChance = guildSettings?.ResponseChance ?? _chatSettings.DefaultResponseChance,
             ImpersonationUserId = guildSettings?.ImpersonationUserId == null
                 ? null
-                : ulong.Parse(guildSettings.ImpersonationUserId)
+                : ulong.Parse(guildSettings.ImpersonationUserId),
+            ReplaceMentions = guildSettings?.ReplaceMentions ?? false
         };
     }
 
